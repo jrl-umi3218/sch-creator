@@ -144,10 +144,6 @@ namespace SCD
 	#pragma endregion
 	#pragma region "public data"
 	public:
-		double _epsilon; //REMARQUE : PEUT-ETRE A PASSER EN PRIVEE ??????
-//		static double _readingNoise;
-//		static double _epsilonRef;
-//		static double _BIG_ANGLE;
 	#pragma endregion
 	#pragma region "constructors"
 	private:
@@ -195,7 +191,7 @@ namespace SCD
 		void	cover(void);
 		void	readVertex(const std::string& filename);
 		void	output(const std::string& rootPath);
-		bool	findFirstTriangle();
+		bool	findFirstTriangle(unsigned &i,unsigned &j,unsigned &k,vector3d &c);
 	#pragma endregion
 	#pragma region "private static methods"
 	private:
@@ -211,8 +207,11 @@ namespace SCD
 		double							_r;
 		double							_R;
 		std::vector<vector3d>			_points;
-		std::vector<VVRSFace>				_spheres;
+		std::vector<VVRSFace>			_spheres;
 		std::set<int,std::less<int> >	_index;
+		double							_epsilon;
+		bool							_ccw;
+
 	#pragma endregion
 	#pragma region "private static data"
 	private:

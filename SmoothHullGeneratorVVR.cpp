@@ -21,7 +21,7 @@ namespace SCD
 
 	bool SmoothHullGeneratorVVR::findCenter(int p1, int p2, int p3, vector3d &center)
 	{
-		/*
+		/**
 		*we will solve the following system :
 		*	(1)	u.x = u.u/2			(median plan of [p1p2])
 		*	(2)	v.x = v.v/2			(median plan of [p1p3])
@@ -82,6 +82,37 @@ namespace SCD
 		for (unsigned int l=0; l<_points.size() && b; ++l)
 		{
 			b = isInSphere(_points[l],center);
+		}
+		return b;
+	}
+
+	bool SmoothHullGeneratorVVR::findFirstTriangle(unsigned &i,unsigned &j,unsigned &k, vector3d &c)
+	{
+		unsigned int n = _points.size();
+			
+		bool b = false;
+		for (i=0; i<n; ++i)
+		{
+			for (j=i+1; j<n; ++j)
+			{
+				for (k=j+1; k<n; ++k)
+				{
+					//let's test if every point is inside the sphere [i,j,k]
+					if (findCenter(i, j, k, c))
+					b = allPointsInSphere(c);
+					if (b) break;
+					//now let's test if every point is inside the sphere [i,k,j]
+					if (findCenter(i, k, j, c))
+					b = allPointsInSphere(c);
+					if (b)
+					{
+						_ccw = false;
+						break;
+					}
+				}
+				if (b) break;
+			}
+			if (b) break;
 		}
 		return b;
 	}
@@ -148,38 +179,22 @@ namespace SCD
             std::cout << "ERROR, impossible to compute an STP-BV for this body with R=" << _R << ", choose larger R" << std::endl;
 
 		// 1 - find a triangle to start with
-		std::cout << "searching for initial triangle..... ";
-		vector3d c;
+		std::cout << "Searching for initial triangle... ";
 		double epsilon_temp = _epsilon;
 		_epsilon = 0.; // should find an initial triangle with such epsilon
 		bool b = false;
-		bool ccw = true;			//is the triangle describes by [i,j,k] counterclockwise
+		_ccw = true;			//is the triangle describes by [i,j,k] counterclockwise
+		unsigned int i,j,k;
+		vector3d c;
 
 #if 1  // find the first matching triangle
-		unsigned int i,j,k;
-		for (i=0; i<n; ++i)
+		if (!(b=findFirstTriangle(i,j,k,c)))
 		{
-			for (j=i+1; j<n; ++j)
-			{
-				for (k=j+1; k<n; ++k)
-				{
-					//let's test if every point is inside the sphere [i,j,k]
-					if (findCenter(i, j, k, c))
-					b = allPointsInSphere(c);
-					if (b) break;
-					//now let's test if every point is inside the sphere [i,k,j]
-					if (findCenter(i, k, j, c))
-					b = allPointsInSphere(c);
-					if (b)
-					{
-						ccw = false;
-						break;
-					}
-				}
-				if (b) break;
-			}
-			if (b) break;
+			_epsilon = 1e-8;
+			std::cout << "Failed" << std::endl <<  "trying with more compliant constraints... " ;
+			b=findFirstTriangle(i,j,k,c);
 		}
+
 #else  // find the triangle with maximum distance of other vertices inside, better but can be very time consuming for large clouds
         int i_min = -1;
         int j_min = -1;
@@ -202,7 +217,7 @@ namespace SCD
                             j_min = j;
                             k_min = k;
                             c_min = c;
-                            ccw = true;
+                            _ccw = true;
                         }
 					}
 					//now let's test if every point is inside the sphere [i,k,j]
@@ -214,7 +229,7 @@ namespace SCD
                             j_min = j;
                             k_min = k;
                             c_min = c;
-                            ccw = false;
+                            _ccw = false;
                         }
 					}
 				}
@@ -229,13 +244,13 @@ namespace SCD
 #endif
 		_epsilon = epsilon_temp;
 
-		if (i==n || j==n || k==n)		//no initial triangle found
+		if (!b)		//no initial triangle found
 		{
 			std::cout << "failed" << std::endl;
 			return;
 		}
 
-		if (!ccw) 
+		if (!_ccw) 
 		{
 			unsigned int e = j;
 			j = k;
@@ -250,7 +265,7 @@ namespace SCD
 //		printSphere(s);
 
 		// 2 - turn around the edge
-		std::cout << "computing hull..... ";
+		std::cout << "Computing hull... ";
 		travelCover(s);
 		if (_spheres.size() != ((_index.size()-2)*2))
 		{
@@ -510,7 +525,7 @@ namespace SCD
 			return;
 		}
 		
-		std::cout << "reading " << fullName << "..... ";
+		std::cout << "Reading " << fullName << "... ";
 		int nVert;
 		double x,y,z;
 		_points.clear();
