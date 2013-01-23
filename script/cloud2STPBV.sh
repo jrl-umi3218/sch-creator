@@ -35,5 +35,6 @@ do
   file_name=`basename $file .qc`
 
   STPBV_generator -r $r -R $R $file "$out_path/$file_name.txt"
+  echo "\n\n"
 done
 
