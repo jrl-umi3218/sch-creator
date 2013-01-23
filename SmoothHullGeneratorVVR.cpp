@@ -510,40 +510,49 @@ namespace SCD
 		std::cout<< "   point3 [" << s._point3 << "] : " << _points[s._point3].x << ", " << _points[s._point3].y << ", " << _points[s._point3].z << std::endl;
 	}
 
-#pragma warning(push)
-#pragma warning(disable : 4996)
-//#endif
 	void SmoothHullGeneratorVVR::readVertex(const std::string& filename)
 	{
 		FILE * file;
 		// Open file
-		std::string fullName = filename;
-		file = fopen(fullName.c_str(), "r");
+		file = fopen(filename.c_str(), "r");
 		if (file == 0)
 		{
-			std::cout << "unable to open file " << fullName << std::endl;
+			std::cout << "unable to open file " << filename << std::endl;
 			return;
 		}
 		
-		std::cout << "Reading " << fullName << "... ";
+		std::cout << "reading " << filename << "..... ";
+		int nbPtsPerFace;
+		if(fscanf(file, "%d\n", &nbPtsPerFace) != 1)
+    {
+      std::cout << filename << " is in the wrong file format." << std::endl;
+      return;
+    }
+
 		int nVert;
 		double x,y,z;
 		_points.clear();
-		fscanf(file, "%d\n", &nVert);
+		if(fscanf(file, "%d\n", &nVert) != 1)
+    {
+      std::cout << filename << " is in the wrong file format." << std::endl;
+      return;
+    }
 
 		vector3d v;
 		for (int i=0; i<nVert; ++i)
 		{
-			fscanf(file, "[%lf,%lf,%lf],", &x, &y, &z);
+			if(fscanf(file, "%lf %lf %lf\n", &x, &y, &z) != 3)
+      {
+        std::cout << filename << " is in the wrong file format." << std::endl;
+        return;
+      }
+
 			v.x = double(x);
 			v.y = double(y);
 			v.z = double(z);
 			_points.push_back(v);
 		}
-		std::cout << "done" << std::endl;
 	}
-//#ifdef FALSE
-#pragma warning(pop)
 
 	void SmoothHullGeneratorVVR::output(const std::string& rootPath)
 	{
