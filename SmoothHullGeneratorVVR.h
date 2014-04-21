@@ -39,7 +39,7 @@ namespace SCD
    *	\date 07.10.23
    *	\bug None
    *	\warning None
-   *  
+   *
    * A triangular face along with the center of its related sphere
    */
   struct VVRSFace
@@ -57,7 +57,7 @@ namespace SCD
    *	\date 07.10.22
    *	\bug None
    *	\warning None
-   *  
+   *
    * A sphere
    */
   struct VVRsphere
@@ -73,7 +73,7 @@ namespace SCD
    *	\date 07.10.22
    *	\bug None
    *	\warning None
-   *  
+   *
    * A Torus without the inner radius
    */
   struct VVRtorus
@@ -90,7 +90,7 @@ namespace SCD
    *	\date 07.07
    *	\bug None
    *	\warning None
-   *  
+   *
    * A sphere
    */
   struct Cone
@@ -118,7 +118,7 @@ namespace SCD
    *	\date 07.10.23
    *	\bug None
    *	\warning None
-   *  
+   *
    * This class read a 3d points cloud and compute its smooth convex hull made of spheres and tori
    */
 
@@ -127,94 +127,94 @@ namespace SCD
   class SmoothHullGeneratorVVR
   {
 #pragma region "public structures"
-    public:
+  public:
 #pragma endregion
 #pragma region "protected structures"
-    protected:
+  protected:
 #pragma endregion
 #pragma region "private structures"
-    private:
-      struct turnData
-      {
-        int			_p1;				//we turn around [_p1,_p2]
-        int			_p2;
-        int			_p3;				//we remember the third point of the previous sphere
-        vector3d		_previousCenter;	//center of the sphere we turn (/come) from
-      };
+  private:
+    struct turnData
+    {
+      int			_p1;				//we turn around [_p1,_p2]
+      int			_p2;
+      int			_p3;				//we remember the third point of the previous sphere
+      vector3d		_previousCenter;	//center of the sphere we turn (/come) from
+    };
 #pragma endregion
 #pragma region "public data"
-    public:
+  public:
 #pragma endregion
 #pragma region "constructors"
-    private:
-    protected:
-    public:
-      SmoothHullGeneratorVVR(double r, double R);
-      SmoothHullGeneratorVVR(std::vector<vector3d>& points, double r, double R);
+  private:
+  protected:
+  public:
+    SmoothHullGeneratorVVR(double r, double R);
+    SmoothHullGeneratorVVR(std::vector<vector3d>& points, double r, double R);
 #pragma endregion
 #pragma region "accessors"
-    public:
+  public:
 #pragma endregion
 #pragma region "public methods"
-    public:
-      //WARNING : be sure that there is no double points in the cloud
-      void	loadGeometry(const std::string& filename);
-      void	compute3DSMaxHull(const std::string& rootPath);
-      void	computeSmoothHull(std::vector<vector3d>& outPoints, std::vector<VVRSFace>& outSFaces);
-      void	computeVVR(const std::string& filename);
-      void	computeVVR_WithPolyhedron(const std::string& filename);
-      void	computeVVR_Prime(const std::string& filename);
+  public:
+    //WARNING : be sure that there is no double points in the cloud
+    void	loadGeometry(const std::string& filename);
+    void	compute3DSMaxHull(const std::string& rootPath);
+    void	computeSmoothHull(std::vector<vector3d>& outPoints, std::vector<VVRSFace>& outSFaces);
+    void	computeVVR(const std::string& filename);
+    void	computeVVR_WithPolyhedron(const std::string& filename);
+    void	computeVVR_Prime(const std::string& filename);
 
 #pragma endregion
 #pragma region "public static methods"
-    public:
+  public:
 #pragma endregion
 #pragma region "protected methods"
-    protected:
+  protected:
 #pragma endregion
 #pragma region "protected static methods"
-    private:
+  private:
 #pragma endregion
 #pragma region "private methods"
-    private:
-      bool	findCenter(int p1, int p2, int p3, vector3d &center);
-      bool	isInSphere(vector3d &point, vector3d &center);
-      double	distInSphere(vector3d &point, vector3d &center);
-      bool	allPointsInSphere(vector3d &center);
-      double	distMaxPointsInSphere(vector3d &center);
-      double	computeAngle(vector3d &p1, vector3d &p2, vector3d &p3, vector3d &axe);
-      int		getKey(int a, int b);
-      int		getKey(turnData& td);
-      double	getKeyByAngle(turnData& td);
-      void	travelCover(VVRSFace s);
-      void	printSphere(VVRSFace& s);
-      void	cover(void);
-      void	readVertex(const std::string& filename);
-      void	output(const std::string& rootPath);
-      bool	findFirstTriangle(unsigned &i,unsigned &j,unsigned &k,vector3d &c);
+  private:
+    bool	findCenter(int p1, int p2, int p3, vector3d &center);
+    bool	isInSphere(vector3d &point, vector3d &center);
+    double	distInSphere(vector3d &point, vector3d &center);
+    bool	allPointsInSphere(vector3d &center);
+    double	distMaxPointsInSphere(vector3d &center);
+    double	computeAngle(vector3d &p1, vector3d &p2, vector3d &p3, vector3d &axe);
+    int		getKey(int a, int b);
+    int		getKey(turnData& td);
+    double	getKeyByAngle(turnData& td);
+    void	travelCover(VVRSFace s);
+    void	printSphere(VVRSFace& s);
+    void	cover(void);
+    void	readVertex(const std::string& filename);
+    void	output(const std::string& rootPath);
+    bool	findFirstTriangle(unsigned &i,unsigned &j,unsigned &k,vector3d &c);
 #pragma endregion
 #pragma region "private static methods"
-    private:
+  private:
 #pragma endregion
 #pragma region "protected data"
-    protected:
+  protected:
 #pragma endregion
 #pragma region "protected static data"
-    protected:
+  protected:
 #pragma endregion
 #pragma region "private data"
-    private:
-      double							_r;
-      double							_R;
-      std::vector<vector3d>			_points;
-      std::vector<VVRSFace>			_spheres;
-      std::set<int,std::less<int> >	_index;
-      double							_epsilon;
-      bool							_ccw;
+  private:
+    double							_r;
+    double							_R;
+    std::vector<vector3d>			_points;
+    std::vector<VVRSFace>			_spheres;
+    std::set<int,std::less<int> >	_index;
+    double							_epsilon;
+    bool							_ccw;
 
 #pragma endregion
 #pragma region "private static data"
-    private:
+  private:
 #pragma endregion
 #pragma region "friendship declarations"
 #pragma endregion

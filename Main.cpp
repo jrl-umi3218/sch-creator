@@ -14,12 +14,12 @@ int main(int argc, char **argv)
 
   po::options_description desc("Allowed options");
   desc.add_options()
-    ("help,h", "produce help message")
-    ("r,r", po::value<double>(&r)->default_value(.2), "small sphere radius")
-    ("R,R", po::value<double>(&R)->default_value(300.), "big sphere radius")
-    ("input-file", po::value<string>(), "input file")
-    ("output-file", po::value<string>(), "output file")
-    ("poly", po::value<bool>()->default_value(false), "generate the polyhedron of the STP-BV");
+  ("help,h", "produce help message")
+  ("r,r", po::value<double>(&r)->default_value(.2), "small sphere radius")
+  ("R,R", po::value<double>(&R)->default_value(300.), "big sphere radius")
+  ("input-file", po::value<string>(), "input file")
+  ("output-file", po::value<string>(), "output file")
+  ("poly", po::value<bool>()->default_value(false), "generate the polyhedron of the STP-BV");
 
   po::positional_options_description pos;
   pos.add("input-file", 1);
@@ -29,7 +29,8 @@ int main(int argc, char **argv)
   po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
   po::notify(vm);
 
-  if (vm.count("help")) {
+  if (vm.count("help"))
+  {
     cout << desc << endl;
     return 1;
   }

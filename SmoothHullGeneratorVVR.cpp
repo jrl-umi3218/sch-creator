@@ -42,7 +42,8 @@ namespace SCD
     nv = v.normsquared();
     nuv = uv.normsquared();
 
-    if (nuv == 0) { // aligned points
+    if (nuv == 0)   // aligned points
+    {
 #ifdef DISPLAY_INFO
       std::cout << "WARNING, no sphere can fit on face made of 3 aligned points" << std::endl;
 #endif
@@ -50,12 +51,15 @@ namespace SCD
     }
     a = (nu*nv-nv*duv)/(2*nuv);
     b = (nu*nv-nu*duv)/(2*nuv);
-    if (((_R-_r)*(_R-_r)-a*a*nu-b*b*nv-2*a*b*duv)/nuv<=0) {
+    if (((_R-_r)*(_R-_r)-a*a*nu-b*b*nv-2*a*b*duv)/nuv<=0)
+    {
 #ifdef DISPLAY_INFO
       //std::cout << "WARNING, no sphere of radius " << _R << " can fit on face "  << p1 << " " << p2 << " " << p3 << std::endl;
 #endif
       return false;
-    } else {
+    }
+    else
+    {
       c = -sqrt(((_R-_r)*(_R-_r)-a*a*nu-b*b*nv-2*a*b*duv)/nuv);
 
       center = u*a + v*b + uv*c + _points[p1];
@@ -126,11 +130,13 @@ namespace SCD
       err = distInSphere(_points[l],center);
       if (err>err_max)
         err_max = err;
-      if (err<=-(_R-_r)*(_R-_r)) {
+      if (err<=-(_R-_r)*(_R-_r))
+      {
         std::cout << "PROBLEM, point at center ? " << err << " center " << center << " point " << _points[l] << std::endl;
       }
     }
-    if (err_max==-(_R-_r)*(_R-_r)) {
+    if (err_max==-(_R-_r)*(_R-_r))
+    {
       std::cout << "PROBLEM, all points at center ? " << " center " << center << " nb points " << _points.size() << std::endl;
     }
     //std::cout << err_max << std::endl;
@@ -142,13 +148,16 @@ namespace SCD
     vector3d u(p2,p1);
     vector3d v(p2,p3);
     double cosinus = u%v/(u.norm()*v.norm());
-    if (cosinus > double(1)) {
+    if (cosinus > double(1))
+    {
 #ifdef DISPLAY_INFO
       std::cout << "ERROR in computing angle, found cos(angle)>1 " << cosinus << std::endl;
 #endif
       cosinus = 1;
       //return 0;
-    } else if (cosinus < double(-1)) {
+    }
+    else if (cosinus < double(-1))
+    {
 #ifdef DISPLAY_INFO
       std::cout << "ERROR in computing angle, found cos(angle)<-1 " << cosinus << std::endl;
 #endif
@@ -156,7 +165,7 @@ namespace SCD
     }
     return (((axe%(u^v)>double(0))?1:-1)*acos(cosinus));
   }
-  //
+//
   void SmoothHullGeneratorVVR::cover(void)
   {
     unsigned int n = _points.size();
@@ -209,9 +218,11 @@ namespace SCD
         for (k=j+1; k<n; ++k)
         {
           //let's test if every point is inside the sphere [i,j,k]
-          if (findCenter(i, j, k, c)) {
+          if (findCenter(i, j, k, c))
+          {
             dist = distMaxPointsInSphere(c);
-            if (dist<dist_min) {
+            if (dist<dist_min)
+            {
               dist_min = dist;
               i_min = i;
               j_min = j;
@@ -221,9 +232,11 @@ namespace SCD
             }
           }
           //now let's test if every point is inside the sphere [i,k,j]
-          if (findCenter(i, k, j, c)) {
+          if (findCenter(i, k, j, c))
+          {
             dist = distMaxPointsInSphere(c);
-            if (dist<dist_min) {
+            if (dist<dist_min)
+            {
               dist_min = dist;
               i_min = i;
               j_min = j;
@@ -250,7 +263,7 @@ namespace SCD
       return;
     }
 
-    if (!_ccw) 
+    if (!_ccw)
     {
       unsigned int e = j;
       j = k;
@@ -287,7 +300,7 @@ namespace SCD
     return ((td._p1<td._p2)?(td._p1*_points.size()+td._p2):(td._p2*_points.size()+td._p1));
   }
 
-  //
+//
   double SmoothHullGeneratorVVR::getKeyByAngle(turnData& td)
   {
     double aMin = 100.;
@@ -372,9 +385,11 @@ postponed:
       {
         if (j!=td._p1 && j!=td._p2 && j!=td._p3)
         {
-          if (findCenter(td._p1, j, td._p2, c)) {
+          if (findCenter(td._p1, j, td._p2, c))
+          {
             double err_max = distMaxPointsInSphere(c);
-            if (err_max<distInSphereMin) {
+            if (err_max<distInSphereMin)
+            {
               distInSphereMin = err_max;
               j_min = j;
             }
@@ -391,7 +406,8 @@ postponed:
           }
         }
       }
-      if (sortedPoints.empty()) {
+      if (sortedPoints.empty())
+      {
         std::cout << "WARNING, no new vertex found in rotation around edge [" << td._p1 << ", " << td._p2 << "] that satisfy inclusion in shpere of all other vertices with chosen precision" << std::endl;
         std::cout << "Taking vertex that satisfy best this condition with value " << distInSphereMin << std::endl;
         if (!findCenter(td._p1, j_min, td._p2, c))
@@ -406,9 +422,11 @@ postponed:
         int p = sortedPoints.begin()->second;
 #ifdef DISPLAY_INFO
         std::cout << "nb candidate vertices " << sortedPoints.size() << " around edge [" << td._p1 << ", " << td._p2 << "] ";
-        for (std::multimap<double, int>::iterator pi=sortedPoints.begin(); pi!=sortedPoints.end(); ++pi) {
+        for (std::multimap<double, int>::iterator pi=sortedPoints.begin(); pi!=sortedPoints.end(); ++pi)
+        {
           std::cout << " " << pi->first << " " << pi->second << " " << (_index.find(pi->second)!=_index.end()); //->first;
-          if (pi->second>1.) {
+          if (pi->second>1.)
+          {
             std::cout << " computed_edge_angle " << curr_edge_angle << " next " <<  (edgeStackByAngle.begin())->first; //->first;
           }
         }
@@ -419,14 +437,16 @@ postponed:
         if (computedEdge.find(getKey(p,td._p2))!=computedEdge.end())
           std::cout << "EDGE with " << p << " and " << td._p2 << " already added" << std::endl;
 #endif
-        if (sortedPoints.size()>1) {
+        if (sortedPoints.size()>1)
+        {
 #ifdef DISPLAY_INFO
           std::cout << td._p1 << " " << _points[td._p1] << std::endl << td._p2 << " " << _points[td._p2] << std::endl;
           for (std::multimap<double, int>::iterator pi=sortedPoints.begin(); pi!=sortedPoints.end(); ++pi)
             std::cout << pi->second << " " << _points[pi->second] << std::endl; //->first;
 #endif
           // if there is indeterminacy between candidate, postpone choice by increasing angle
-          if (curr_edge_angle<3.14159) {
+          if (curr_edge_angle<3.14159)
+          {
             computedEdge.erase(getKey(td));
             edgeStack.insert(getKey(td));
             edgeStackByAngle.insert(std::pair<double,turnData>(getKeyByAngle(td)+3.14159,td));
@@ -435,7 +455,9 @@ postponed:
 #endif
             goto postponed;
 #ifdef DISPLAY_INFO
-          } else {
+          }
+          else
+          {
             std::cout << "treating POSTPONED edge" << std::endl;
 #endif
           }
@@ -491,16 +513,18 @@ postponed:
     }
 
 #ifdef DISPLAY_INFO
-    for (int i=0; i<_spheres.size(); ++i) {
+    for (int i=0; i<_spheres.size(); ++i)
+    {
       std::cout << _spheres[i]._point1 << " " << _spheres[i]._point2 << " " << _spheres[i]._point3 << std::endl;
     }
-    for (unsigned int j=0; j<_points.size(); ++j) {
+    for (unsigned int j=0; j<_points.size(); ++j)
+    {
       std::cout << j << " " << _points[j].x << " " << _points[j].y << " " << _points[j].z << std::endl;
     }
 #endif
   }
 
-  //#ifdef FALSE
+//#ifdef FALSE
   void SmoothHullGeneratorVVR::printSphere(VVRSFace& s)
   {
     std::cout << "**Spheres**" << std::endl;
@@ -571,13 +595,13 @@ postponed:
     {
       output << _r << "," << _R << "\n";
       output << _index.size() << "," << _spheres.size() << "\n";
-      for (unsigned int i=0; 0<_index.size();++i)
+      for (unsigned int i=0; 0<_index.size(); ++i)
       {
         if (*(_index.begin()) == i)
         {
           output << "[" << _points[*(_index.begin())].x << ","
-            << _points[*(_index.begin())].y << ","
-            << _points[*(_index.begin())].z << "],";
+                 << _points[*(_index.begin())].y << ","
+                 << _points[*(_index.begin())].z << "],";
           map.push_back(k);
           _index.erase(_index.begin());
           k++;
@@ -595,13 +619,13 @@ postponed:
       output.close();
     }
   }
-  //#endif
+//#endif
 
   void SmoothHullGeneratorVVR::loadGeometry(const std::string& filename)
   {
     readVertex(filename);
   }
-  //#ifdef FALSE
+//#ifdef FALSE
 
   void SmoothHullGeneratorVVR::compute3DSMaxHull(const std::string& rootPath)
   {
@@ -632,7 +656,7 @@ postponed:
     std::vector<int> map;
 
     std::cout << "size of _index : " << _index.size() << std::endl;
-    for (unsigned int i=0; 0<_index.size();++i)
+    for (unsigned int i=0; 0<_index.size(); ++i)
     {
       if (*(_index.begin()) == i)
       {
@@ -661,7 +685,7 @@ postponed:
       outSFaces.push_back(sf);
     }
   }
-  //#endif
+//#endif
   void SmoothHullGeneratorVVR::computeVVR_Prime(const std::string& filename)
   {
     std::ofstream os;
@@ -707,8 +731,8 @@ postponed:
         computed[i][j] = false;
     }
 
-    for(std::vector<vector3d>::const_iterator it = _points.begin() ; 
-        it != _points.end() ; 
+    for(std::vector<vector3d>::const_iterator it = _points.begin() ;
+        it != _points.end() ;
         ++it)
     {
       stmp._center = *it;
@@ -717,8 +741,8 @@ postponed:
     }
     ssVVR.resize(_points.size());
 
-    for(std::vector<VVRSFace>::const_iterator it = _spheres.begin() ; 
-        it != _spheres.end() ; 
+    for(std::vector<VVRSFace>::const_iterator it = _spheres.begin() ;
+        it != _spheres.end() ;
         ++it)
     {
       //register the new big sphere
@@ -903,7 +927,7 @@ postponed:
       - trouver les BV avec lesquels chacun était en relation
       - petites sphères : supprimer la VVR limite en question (point)
       - grande sphère : garder la VVR limite mais changer l'ID du outBV -> sphère de l'autre côté
-      (en fait tout cette étape se fait uniquement au niveau des VVR des petites et grandes sphères, y'a rien qui change 
+      (en fait tout cette étape se fait uniquement au niveau des VVR des petites et grandes sphères, y'a rien qui change
       au niveau des BV eux-mêmes)
      */
     std::map<int, bool> torusToErase, torusToEraseID;
@@ -965,7 +989,7 @@ postponed:
         ssVVR[it->first].erase(it2);
     }
 
-    //change the "outer BV" for the concerned big spheres' VVR limits : it's not the erased torus but the big 
+    //change the "outer BV" for the concerned big spheres' VVR limits : it's not the erased torus but the big
     //sphere that has the same center
     for(std::multimap<int, std::pair<int, int> >::iterator it = linkedbSphereIDs.begin() ; it != linkedbSphereIDs.end() ; ++it)
     {
@@ -1122,7 +1146,7 @@ postponed:
     os.close();
   }
 
-  //#ifdef FALSE
+//#ifdef FALSE
   void SmoothHullGeneratorVVR::computeVVR(const std::string& filename)
   {
     std::ofstream os;
@@ -1570,7 +1594,7 @@ postponed:
       }*/
     os.close();
   }
-  //#endif
+//#endif
   void SmoothHullGeneratorVVR::computeVVR_WithPolyhedron(const std::string& filename)
   {
     std::ofstream os;
