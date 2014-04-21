@@ -126,13 +126,6 @@ namespace SCD
 
   class SmoothHullGeneratorVVR
   {
-#pragma region "public structures"
-  public:
-#pragma endregion
-#pragma region "protected structures"
-  protected:
-#pragma endregion
-#pragma region "private structures"
   private:
     struct turnData
     {
@@ -141,21 +134,11 @@ namespace SCD
       int			_p3;				//we remember the third point of the previous sphere
       vector3d		_previousCenter;	//center of the sphere we turn (/come) from
     };
-#pragma endregion
-#pragma region "public data"
-  public:
-#pragma endregion
-#pragma region "constructors"
-  private:
-  protected:
+
   public:
     SmoothHullGeneratorVVR(double r, double R);
     SmoothHullGeneratorVVR(std::vector<vector3d>& points, double r, double R);
-#pragma endregion
-#pragma region "accessors"
-  public:
-#pragma endregion
-#pragma region "public methods"
+
   public:
     //WARNING : be sure that there is no double points in the cloud
     void	loadGeometry(const std::string& filename);
@@ -165,17 +148,6 @@ namespace SCD
     void	computeVVR_WithPolyhedron(const std::string& filename);
     void	computeVVR_Prime(const std::string& filename);
 
-#pragma endregion
-#pragma region "public static methods"
-  public:
-#pragma endregion
-#pragma region "protected methods"
-  protected:
-#pragma endregion
-#pragma region "protected static methods"
-  private:
-#pragma endregion
-#pragma region "private methods"
   private:
     bool	findCenter(int p1, int p2, int p3, vector3d &center);
     bool	isInSphere(vector3d &point, vector3d &center);
@@ -192,17 +164,7 @@ namespace SCD
     void	readVertex(const std::string& filename);
     void	output(const std::string& rootPath);
     bool	findFirstTriangle(unsigned &i,unsigned &j,unsigned &k,vector3d &c);
-#pragma endregion
-#pragma region "private static methods"
-  private:
-#pragma endregion
-#pragma region "protected data"
-  protected:
-#pragma endregion
-#pragma region "protected static data"
-  protected:
-#pragma endregion
-#pragma region "private data"
+
   private:
     double							_r;
     double							_R;
@@ -211,15 +173,8 @@ namespace SCD
     std::set<int,std::less<int> >	_index;
     double							_epsilon;
     bool							_ccw;
-
-#pragma endregion
-#pragma region "private static data"
-  private:
-#pragma endregion
-#pragma region "friendship declarations"
-#pragma endregion
-
   };
 }
 
 #endif	//SCD_SMOOTH_HULL_GENERATOR_VVR_H
+
