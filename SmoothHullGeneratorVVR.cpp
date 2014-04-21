@@ -917,18 +917,17 @@ postponed:
     }
 
     //sort the data to erase the useless toruses
-    /*METHODE :
-      - trouver les tores inutiles : ce sont ceux dont les deux grandes sphères de chaque côté ont le même centre
-      - pour ça, parcourir la liste des VVR de tores et regarder les sphères de chaque côté.
-      - noter les ID des tores à supprimer
-      - pour chacun, noter les ID des BV avec lesquels il est en relation : petites sphères et grandes sphères
-      - supprimer les tores inutiles
-      - supprimer les VVR de ces tores
-      - trouver les BV avec lesquels chacun était en relation
-      - petites sphères : supprimer la VVR limite en question (point)
-      - grande sphère : garder la VVR limite mais changer l'ID du outBV -> sphère de l'autre côté
-      (en fait tout cette étape se fait uniquement au niveau des VVR des petites et grandes sphères, y'a rien qui change
-      au niveau des BV eux-mêmes)
+    /*METHOD :
+      - find the useless torus, aka those whose 2 side big spheres have the same center
+      - To this purpose, browse the list of tori VVR and look the spheres on both sides.
+      - Get the ID of the tori to be suppressed
+      - For each of those, get the ID of the BV it is releated with: small and big spheres
+      - suppress the useless tori
+      - suppress the VVR of those tori
+      - find the BV with which each of those are in relation
+      - small spheres: suppress the limit VVR (point)
+      - bug sphere: keep the limit VVR but change the ID of the outBV >> other side sphere
+      (this whole step is only realized for the VVR of the small/bug spheres, nothing changes regarding the BV)
      */
     std::map<int, bool> torusToErase, torusToEraseID;
     std::multimap<int, int> linkedsSphereIDs;
@@ -1146,7 +1145,7 @@ postponed:
     os.close();
   }
 
-//#ifdef FALSE
+
   void SmoothHullGeneratorVVR::computeVVR(const std::string& filename)
   {
     std::ofstream os;
@@ -1366,18 +1365,17 @@ postponed:
     }
 
     //sort the data to erase the useless toruses
-    /*METHODE :
-      - trouver les tores inutiles : ce sont ceux dont les deux grandes sphères de chaque côté ont le même centre
-      - pour ça, parcourir la liste des VVR de tores et regarder les sphères de chaque côté.
-      - noter les ID des tores à supprimer
-      - pour chacun, noter les ID des BV avec lesquels il est en relation : petites sphères et grandes sphères
-      - supprimer les tores inutiles
-      - supprimer les VVR de ces tores
-      - trouver les BV avec lesquels chacun était en relation
-      - petites sphères : supprimer la VVR limite en question (point)
-      - grande sphère : garder la VVR limite mais changer l'ID du outBV -> sphère de l'autre côté
-      (en fait tout cette étape se fait uniquement au niveau des VVR des petites et grandes sphères, y'a rien qui change
-      au niveau des BV eux-mêmes)
+    /*METHOD :
+      - find the useless torus, aka those whose 2 side big spheres have the same center
+      - To this purpose, browse the list of tori VVR and look the spheres on both sides.
+      - Get the ID of the tori to be suppressed
+      - For each of those, get the ID of the BV it is releated with: small and big spheres
+      - suppress the useless tori
+      - suppress the VVR of those tori
+      - find the BV with which each of those are in relation
+      - small spheres: suppress the limit VVR (point)
+      - bug sphere: keep the limit VVR but change the ID of the outBV >> other side sphere
+      (this whole step is only realized for the VVR of the small/bug spheres, nothing changes regarding the BV)
      */
     std::map<int, bool> torusToErase, torusToEraseID;
     std::multimap<int, int> linkedsSphereIDs;
@@ -1594,7 +1592,8 @@ postponed:
       }*/
     os.close();
   }
-//#endif
+
+
   void SmoothHullGeneratorVVR::computeVVR_WithPolyhedron(const std::string& filename)
   {
     std::ofstream os;
@@ -1826,18 +1825,17 @@ postponed:
     }
 
     //sort the data to erase the useless toruses
-    /*METHODE :
-      - trouver les tores inutiles : ce sont ceux dont les deux grandes sphères de chaque côté ont le même centre
-      - pour ça, parcourir la liste des VVR de tores et regarder les sphères de chaque côté.
-      - noter les ID des tores à supprimer
-      - pour chacun, noter les ID des BV avec lesquels il est en relation : petites sphères et grandes sphères
-      - supprimer les tores inutiles
-      - supprimer les VVR de ces tores
-      - trouver les BV avec lesquels chacun était en relation
-      - petites sphères : supprimer la VVR limite en question (point)
-      - grande sphère : garder la VVR limite mais changer l'ID du outBV -> sphère de l'autre côté
-      (en fait tout cette étape se fait uniquement au niveau des VVR des petites et grandes sphères, y'a rien qui change
-      au niveau des BV eux-mêmes)
+    /*METHOD :
+      - find the useless torus, aka those whose 2 side big spheres have the same center
+      - To this purpose, browse the list of tori VVR and look the spheres on both sides.
+      - Get the ID of the tori to be suppressed
+      - For each of those, get the ID of the BV it is releated with: small and big spheres
+      - suppress the useless tori
+      - suppress the VVR of those tori
+      - find the BV with which each of those are in relation
+      - small spheres: suppress the limit VVR (point)
+      - bug sphere: keep the limit VVR but change the ID of the outBV >> other side sphere
+      (this whole step is only realized for the VVR of the small/bug spheres, nothing changes regarding the BV)
      */
     std::map<int, bool> torusToErase, torusToEraseID;
     std::multimap<int, int> linkedsSphereIDs;
@@ -2070,10 +2068,8 @@ postponed:
     os.close();
 
 
-    //spawnl(P_WAIT,"qconvex.exe","qconvex.exe",(std::string(" TI ")+filename+std::string(".inp")).c_str(),(std::string(" TO ")+filename+std::string(".otp")).c_str()," Qt"," o"," f",NULL);//appel à qconvex.exe
-
+    //spawnl(P_WAIT,"qconvex.exe","qconvex.exe",(std::string(" TI ")+filename+std::string(".inp")).c_str(),(std::string(" TO ")+filename+std::string(".otp")).c_str()," Qt"," o"," f",NULL);//call to qconvex.exe
 
   }
-
-
 }
+
