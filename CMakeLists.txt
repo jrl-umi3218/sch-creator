@@ -10,9 +10,11 @@ set(CXX_DISABLE_WERROR True)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 
-SET(PROJECT_NAME sch-creator)
+SET(PROJECT_NAME sch_creator)
 SET(PROJECT_DESCRIPTION "Creation of Sphere-Torus Patches Bounding Volumes")
-set(PROJECT_CONTACT francois.keith@lirmm.fr)
+SET(PROJECT_URL "")
+
+SETUP_PROJECT()
 
 find_package(Boost COMPONENTS program_options REQUIRED)
 
@@ -45,10 +47,36 @@ LIST(APPEND ${PROJECT_NAME}_SOURCE_FILES ${${PROJECT_NAME}_HEADER_FILES})
 ADD_EXECUTABLE (${PROJECT_NAME} ${${PROJECT_NAME}_SOURCE_FILES} )
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Boost_LIBRARIES} )
 
-PKG_CONFIG_USE_DEPENDENCY(sch-creator sch)
+PKG_CONFIG_USE_DEPENDENCY(${PROJECT_NAME} sch)
+
+CONFIG_FILES(script/vrml2sch.sh)
+
+# Unit testing:
+# Create volumes for simple surfaces
+FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tmp/)
+SET(FILE_LIST cube2x2 s2x2)
+FOREACH(f ${FILE_LIST})
+  #convert the file from vrml to cloud
+  ADD_TEST(test_vrml_parsing_${f} ${PYTHON_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/script/vrml2cloud.py
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/wrl/${f}.wrl
+    ${CMAKE_CURRENT_BINARY_DIR}/tmp/${f}.cloud)
+  ADD_TEST(test_vrml_parsing_${f}_cmp ${CMAKE_COMMAND} -E compare_files
+    ${CMAKE_CURRENT_BINARY_DIR}/tmp/${f}.cloud
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/cloud/${f}.cloud
+  )
+
+  #convert the file from cloud to sch
+  ADD_TEST(test_build_from_cloud_${f} ${PROJECT_NAME}
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/cloud/${f}.cloud
+    ${CMAKE_CURRENT_BINARY_DIR}/tmp/${f}.txt)
+  ADD_TEST(test_build_from_cloud_${f}_cmp ${CMAKE_COMMAND} -E compare_files
+    ${CMAKE_CURRENT_BINARY_DIR}/tmp/${f}.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples/sch/${f}.txt
+  )
+ENDFOREACH()
 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
-
 
 SETUP_PROJECT_FINALIZE()
 SETUP_PROJECT_CPACK()

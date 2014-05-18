@@ -1,0 +1,165 @@
+#VRML V2.0 utf8
+
+Transform {	#47
+	children [ 
+		Shape {
+			appearance Appearance {
+				material Material {
+					diffuseColor 0 .95 0
+					shininess .01
+					transparency 0
+				}
+			}
+			geometry IndexedFaceSet {
+				ccw FALSE
+				solid FALSE
+				creaseAngle 1.56207
+				coord Coordinate {
+					point [
+						-0.2  0.4  0.4, 0.2  0.4  0.4, 0.2 -0.0  0.4, -0.2 -0.0  0.4, 
+						-0.2  0.4 -0.0, 0.2  0.4 -0.0, 0.2 -0.0 -0.0, -0.2 -0.0 -0.0, 
+					]
+				}
+				coordIndex [
+					0,1,2,-1,
+					0,2,3,-1,
+
+					4,6,5,-1,
+					4,7,6,-1,
+		
+					0,4,5,-1,
+					0,5,1,-1,
+
+					2,6,7,-1,
+					2,7,3,-1,
+
+					1,5,6,-1,
+					1,6,2,-1,
+
+					0,3,7,-1,
+					0,7,4,-1,
+				]
+ 			}
+		}
+		Shape {
+			appearance Appearance {
+				material Material {
+					diffuseColor  0 .85 0
+					shininess .01
+					transparency 0
+				}
+			}
+			geometry IndexedFaceSet {
+				ccw FALSE
+				solid FALSE
+				creaseAngle 1.56207
+				coord Coordinate {
+					point [
+						-0.2  0.0  0.0, 0.2  0.0  0.0, 0.2 -0.4  0.0, -0.2 -0.4  0.0, 
+						-0.2  0.0 -0.4, 0.2  0.0 -0.4, 0.2 -0.4 -0.4, -0.2 -0.4 -0.4, 
+					]
+				}
+				coordIndex [
+					0,1,2,-1,
+					0,2,3,-1,
+
+					4,6,5,-1,
+					4,7,6,-1,
+		
+					0,4,5,-1,
+					0,5,1,-1,
+
+					2,6,7,-1,
+					2,7,3,-1,
+
+					1,5,6,-1,
+					1,6,2,-1,
+
+					0,3,7,-1,
+					0,7,4,-1,
+				]
+ 			}
+		}
+
+		Shape {
+			appearance Appearance {
+				material Material {
+					diffuseColor  0 .9 0
+					shininess .01
+					transparency 0
+				}
+			}
+			geometry IndexedFaceSet {
+				ccw FALSE
+				solid FALSE
+				creaseAngle 1.56207
+				coord Coordinate {
+					point [
+						-0.2  0.4  0.0, 0.2  0.4  0.0, 0.2 -0.0  0.0, -0.2 -0.0  0.0, 
+						-0.2  0.4 -0.4, 0.2  0.4 -0.4, 0.2 -0.0 -0.4, -0.2 -0.0 -0.4, 
+					]
+				}
+				coordIndex [
+					0,1,2,-1,
+					0,2,3,-1,
+
+					4,6,5,-1,
+					4,7,6,-1,
+		
+					0,4,5,-1,
+					0,5,1,-1,
+
+					2,6,7,-1,
+					2,7,3,-1,
+
+					1,5,6,-1,
+					1,6,2,-1,
+
+					0,3,7,-1,
+					0,7,4,-1,
+				]
+ 			}
+		}
+
+				Shape {
+			appearance Appearance {
+				material Material {
+					diffuseColor  0 .9 0
+					shininess .01
+					transparency 0
+				}
+			}
+			geometry IndexedFaceSet {
+				ccw FALSE
+				solid FALSE
+				creaseAngle 1.56207
+				coord Coordinate {
+					point [
+						-0.2  0.0 -0.4, 0.2  0.0 -0.4, 0.2 -0.4 -0.4, -0.2 -0.4 -0.4, 
+						-0.2  0.0 -0.8, 0.2  0.0 -0.8, 0.2 -0.4 -0.8, -0.2 -0.4 -0.8, 
+					]
+				}
+				coordIndex [
+					0,1,2,-1,
+					0,2,3,-1,
+
+					4,6,5,-1,
+					4,7,6,-1,
+		
+					0,4,5,-1,
+					0,5,1,-1,
+
+					2,6,7,-1,
+					2,7,3,-1,
+
+					1,5,6,-1,
+					1,6,2,-1,
+
+					0,3,7,-1,
+					0,7,4,-1,
+				]
+ 			}
+		}
+
+	]
+}
