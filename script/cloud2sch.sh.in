@@ -5,6 +5,8 @@ local_dir=`dirname $0`
 if [ $# -lt 2 ]
 then
   echo "Usage: `basename $0` input_path output_path [R=300, r=0.2]"
+  echo " input_path correspond to the path of the folder containing the vrml files (extension: .qc)"
+  echo " output_path corresponds to the path of the folder where the created files will be stored"
   exit 1
 fi
 
@@ -15,7 +17,6 @@ r=0.2
 
 [ $3 ] && R=$3
 [ $4 ] && r=$4
-
 
 if [ ! -d "$in_path" ]
 then
@@ -30,15 +31,12 @@ then
   exit 2
 fi
 
-for file in $in_path/*.wrl
+for file in $in_path/*.qc
 do
   echo $file
-  tmp_file=`tempfile`
-  file_name=`basename $file .wrl`
-  
-  $local_dir/vrml2cloud.py $file $tmp_file
-  STPBV_generator -r $r -R $R $tmp_file "$out_path/$file_name.txt"
+  file_name=`basename $file .qc`
 
-  rm $tmp_file
+  ${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME} -r $r -R $R $file "$out_path/$file_name.txt"
+  echo "\n\n"
 done
 
