@@ -21,7 +21,7 @@ SETUP_PROJECT()
 # DEPENDENCIES
 find_package(Boost COMPONENTS program_options REQUIRED)
 
-ADD_REQUIRED_DEPENDENCY("sch")
+ADD_REQUIRED_DEPENDENCY("sch-core")
 
 ####################################
 ## section: include directory
@@ -51,32 +51,7 @@ LIST(APPEND ${PROJECT_NAME}_SOURCE_FILES ${${PROJECT_NAME}_HEADER_FILES})
 ADD_EXECUTABLE (${PROJECT_NAME} ${${PROJECT_NAME}_SOURCE_FILES} )
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Boost_LIBRARIES} )
 
-PKG_CONFIG_USE_DEPENDENCY(${PROJECT_NAME} sch)
-
-# Unit testing:
-# Create volumes for simple surfaces
-FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tmp/)
-SET(FILE_LIST cube2x2 s2x2)
-FOREACH(f ${FILE_LIST})
-  #convert the file from vrml to cloud
-  ADD_TEST(test_vrml_parsing_${f} ${PYTHON_EXECUTABLE}
-    ${CMAKE_CURRENT_SOURCE_DIR}/script/vrml2cloud.py
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/wrl/${f}.wrl
-    ${CMAKE_CURRENT_BINARY_DIR}/tmp/${f}.cloud)
-  ADD_TEST(test_vrml_parsing_${f}_cmp ${CMAKE_COMMAND} -E compare_files
-    ${CMAKE_CURRENT_BINARY_DIR}/tmp/${f}.cloud
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/cloud/${f}.cloud
-  )
-
-  #convert the file from cloud to sch
-  ADD_TEST(test_build_from_cloud_${f} ${PROJECT_NAME}
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/cloud/${f}.cloud
-    ${CMAKE_CURRENT_BINARY_DIR}/tmp/${f}.txt)
-  ADD_TEST(test_build_from_cloud_${f}_cmp ${CMAKE_COMMAND} -E compare_files
-    ${CMAKE_CURRENT_BINARY_DIR}/tmp/${f}.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/examples/sch/${f}.txt
-  )
-ENDFOREACH()
+PKG_CONFIG_USE_DEPENDENCY(${PROJECT_NAME} sch-core)
 
 ADD_SUBDIRECTORY(script)
 
