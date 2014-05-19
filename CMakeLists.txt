@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 2.6)
 INCLUDE(cmake/base.cmake)
 INCLUDE(cmake/eigen.cmake)
 INCLUDE(cmake/boost.cmake)
+INCLUDE(cmake/qhull.cmake)
 INCLUDE(cmake/cpack.cmake)
 
 set(CXX_DISABLE_WERROR True)
@@ -16,10 +17,13 @@ SET(PROJECT_URL "")
 
 SETUP_PROJECT()
 
+####################################
+# DEPENDENCIES
 find_package(Boost COMPONENTS program_options REQUIRED)
 
 ADD_REQUIRED_DEPENDENCY("sch")
 
+####################################
 ## section: include directory
 
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
@@ -49,8 +53,6 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Boost_LIBRARIES} )
 
 PKG_CONFIG_USE_DEPENDENCY(${PROJECT_NAME} sch)
 
-CONFIG_FILES(script/vrml2sch.sh)
-
 # Unit testing:
 # Create volumes for simple surfaces
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tmp/)
@@ -75,6 +77,8 @@ FOREACH(f ${FILE_LIST})
     ${CMAKE_CURRENT_SOURCE_DIR}/examples/sch/${f}.txt
   )
 ENDFOREACH()
+
+ADD_SUBDIRECTORY(script)
 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
 

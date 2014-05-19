@@ -24,11 +24,15 @@ then
   exit 2
 fi
 
-for file in $in_path/*.qc
+for file in $in_path/*.wrl
 do
   echo $file
-  file_name=`basename $file .qc`
+  tmp_file=`tempfile`
+  file_name=`basename $file .wrl`
+  
+  $local_dir/vrml2qconvexinput.py $file $tmp_file
+  @QCONVEX_EXEC@ TI $tmp_file TO "$out_path/$file_name-ch.txt" Qt o f
 
-  qconvex TI $file TO "$out_path/$file_name-ch.txt" Qt o f
+  rm $tmp_file
 done
 
