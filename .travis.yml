@@ -1,0 +1,17 @@
+language: cpp
+compiler: gcc
+env:
+  global:
+  - APT_DEPENDENCIES="doxygen doxygen-latex libboost-all-dev"
+  - GIT_DEPENDENCIES="jrl-umi3218/sch-core"
+notifications:
+  email:
+  - francois.keith@gmail.com
+branches:
+  only:
+  - master
+  - debian
+script: ./.travis/run build
+after_success: ./.travis/run after_success
+after_failure: ./.travis/run after_failure
+before_install: ./.travis/run before_install
