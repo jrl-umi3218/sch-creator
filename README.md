@@ -21,7 +21,22 @@ FIXME: write this.
 
 ### Building from blender files:
 
-FIXME: write this.
+- copy «script/blender/io_qconvex» directory to youre blender addons directory
+  (~/.blender/version/scripts/addons/ on GNU/Linux)
+- open blender
+- click on «File/User Preferences...» menu
+- click on «Addons» tab
+- click «Import-Export» sub section
+- enable «Import-Export: qconvex cloud format»
+- click on «Save As Default» button
+- close blend
+
+### Converting
+
+- run `script/blender_2cloud.sh output_directory file1 file2 ... fileN`
+- output_directory must be fill with .qc files
+- `cloud2qhull.sh qc_directory output_directory` convert .qc files into convex hull
+- `cloud2sch qc_directory output_directory [R,r]` convert .qc files into sch hull
 
 Dependency
 ----------
