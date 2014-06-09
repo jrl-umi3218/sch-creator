@@ -6,6 +6,9 @@ import bpy
 
 # file loader per extension
 loader_factory = {
+  '.ply': lambda file: bpy.ops.import_mesh.ply(filepath=file),
+  '.stl': lambda file: bpy.ops.import_mesh.stl(filepath=file),
+  '.3ds': lambda file: bpy.ops.import_scene.autodesk_3ds(filepath=file, axis_forward='Y', axis_up='Z'),
   '.obj': lambda file: bpy.ops.import_scene.obj(filepath=file, axis_forward='Y', axis_up='Z'),
   '.wrl': lambda file: bpy.ops.import_scene.x3d(filepath=file, axis_forward='Y', axis_up='Z')
 }
