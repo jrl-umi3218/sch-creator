@@ -4,6 +4,7 @@ env:
   global:
   - APT_DEPENDENCIES="doxygen doxygen-latex libboost-all-dev blender libqhull-dev"
   - GIT_DEPENDENCIES="jrl-umi3218/sch-core"
+  - secure: Frhx1ZsdImzDRcod+LBEGweaOGQa9EGHM3h/Qfux3GQxLRFiFOnzp56PLL6ASB0j9GIuSwgJaYjVKH1QFSpEQh+7SY9LE5RSsPuMV1F7FV7aO2F0Iv8YZhTqf3WEyu8msXRuBWABOeGVEOMSCEUWh+bgEeolTkqfx9D37ioCGAk=
 notifications:
   email:
   - francois.keith@gmail.com
