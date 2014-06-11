@@ -1,9 +1,9 @@
 /**
  *	vector3
  *
- *	\author Aurélien Pocheville
+ *	\author AurÃ©lien Pocheville
  *
- *	(C) 2004 Aurélien Pocheville
+ *	(C) 2004 AurÃ©lien Pocheville
  */
 
 #pragma once
