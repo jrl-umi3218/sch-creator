@@ -68,7 +68,8 @@ FOREACH(f ${FILE_LIST})
   )
 
   #convert the file from cloud to sch
-  ADD_TEST(test_build_from_cloud_${f} ${PROJECT_NAME}
+  ADD_TEST(NAME test_build_from_cloud_${f}
+    COMMAND ${PROJECT_NAME}
     ${CMAKE_SOURCE_DIR}/examples/cloud/${f}.cloud
     ${CMAKE_BINARY_DIR}/tmp/${f}.txt)
   ADD_TEST(test_build_from_cloud_${f}_cmp ${CMAKE_COMMAND} -E compare_files
