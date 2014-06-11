@@ -1,6 +1,9 @@
 sch-creator
 ===========
 
+[![Build Status](https://travis-ci.org/jrl-umi3218/sch-creator.svg?branch=master)](https://travis-ci.org/jrl-umi3218/sch-creator)
+[![Coverage Status](https://coveralls.io/repos/jrl-umi3218/sch-creator/badge.png)](https://coveralls.io/r/jrl-umi3218/sch-creator)
+
 Documentation
 -------------
 
