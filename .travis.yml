@@ -2,7 +2,7 @@ language: cpp
 compiler: gcc
 env:
   global:
-  - APT_DEPENDENCIES="doxygen doxygen-latex libboost-all-dev"
+  - APT_DEPENDENCIES="doxygen doxygen-latex libboost-all-dev blender libqhull-dev"
   - GIT_DEPENDENCIES="jrl-umi3218/sch-core"
 notifications:
   email:
