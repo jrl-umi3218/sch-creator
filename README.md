@@ -21,8 +21,7 @@ FIXME: write this.
 
 ### Building from blender files:
 
-- copy «script/blender/io_qconvex» directory to youre blender addons directory
-  (~/.blender/version/scripts/addons/ on GNU/Linux)
+- install this package (see instructions below)
 - open blender
 - click on «File/User Preferences...» menu
 - click on «Addons» tab
