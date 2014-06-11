@@ -31,16 +31,24 @@ IF(QHULL_FOUND)
 ENDIF(QHULL_FOUND)
 
 # Install packages depending on blender
-SET(BLENDER_EXECUTABLE  blender)
-EXEC_PROGRAM("${BLENDER_EXECUTABLE} --version >> /dev/null" RETURN_VALUE BlenderExecResult)
-IF(${BlenderExecResult} EQUAL 0)
-  MESSAGE("Blender found")
-  SET(BLENDER_FOUND TRUE)
-ELSE()
-  MESSAGE("Blender not found")
-  SET(BLENDER_FOUND FALSE)
-ENDIF(${BlenderExecResult} EQUAL 0)
+IF(UNIX)
+  SET(BLENDER_EXECUTABLE  blender)
+  EXECUTE_PROCESS(COMMAND "${BLENDER_EXECUTABLE}" --version
+                OUTPUT_VARIABLE BlenderExecOutput
+                RESULT_VARIABLE BlenderExecResult)
+  IF(${BlenderExecResult} EQUAL 0)
+    STRING(REGEX MATCH "[0-9.]+" BLENDER_VERSION "${BlenderExecOutput}")
+    MESSAGE("Blender found ${BLENDER_VERSION}")
+    SET(BLENDER_FOUND TRUE)
 
+    INSTALL(FILES blender/io_qconvex/export_qc.py
+                  blender/io_qconvex/__init__.py
+            DESTINATION ~/.blender/${BLENDER_VERSION}/scripts/addons/io_qconvex/)
+  ELSE()
+    MESSAGE("Blender not found")
+    SET(BLENDER_FOUND FALSE)
+  ENDIF(${BlenderExecResult} EQUAL 0)
+ENDIF(UNIX)
 
 
 ### Add some tests.
