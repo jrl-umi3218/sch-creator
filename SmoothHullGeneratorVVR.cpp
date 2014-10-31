@@ -542,6 +542,7 @@ postponed:
     if (file == 0)
     {
       std::cout << "unable to open file " << filename << std::endl;
+      fclose (file);
       return;
     }
 
@@ -552,6 +553,7 @@ postponed:
     if(fscanf(file, "%d\n", &nVert) != 1)
     {
       std::cout << filename << " is in the wrong file format." << std::endl;
+      fclose (file);
       return;
     }
 
@@ -561,6 +563,7 @@ postponed:
       if(fscanf(file, "%lf %lf %lf\n", &x, &y, &z) != 3)
       {
         std::cout << filename << " is in the wrong file format." << std::endl;
+        fclose (file);
         return;
       }
 
@@ -569,6 +572,9 @@ postponed:
       v.z = double(z);
       _points.push_back(v);
     }
+
+    // Close file
+    fclose (file);
   }
 
   void SmoothHullGeneratorVVR::output(const std::string& rootPath)
