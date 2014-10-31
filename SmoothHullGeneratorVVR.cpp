@@ -547,6 +547,13 @@ postponed:
     }
 
     std::cout << "reading " << filename << "..... ";
+    int nbPtsPerFace;
+    if(fscanf(file, "%d\n", &nbPtsPerFace) != 1)
+    {
+      std::cout << filename << " is in the wrong file format." << std::endl;
+      return;
+    }
+
     int nVert;
     double x,y,z;
     _points.clear();
