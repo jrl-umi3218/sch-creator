@@ -23,8 +23,8 @@ class vector3
 public:
   T x,y,z;
 
-  /// Default constructor
-  inline vector3<T>()
+  /// Default constructor (null vector)
+  inline vector3<T>():x(0),y(0),z(0)
   {}
   /// Copy constructor
   inline vector3<T>(const vector3<T>& v):x(v.x),y(v.y),z(v.z)
@@ -35,7 +35,7 @@ public:
   /// Fill in constructor
   inline vector3<T>(const T& t):x(t),y(t),z(t)
   {}
-  /// Constructor with to points
+  /// Constructor with two points
   inline vector3<T>(const vector3<T>& a, const vector3<T>& b):x(b.x-a.x),y(b.y-a.y),z(b.z-a.z)
   {}
 
