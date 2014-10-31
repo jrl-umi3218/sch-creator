@@ -379,7 +379,7 @@ postponed:
 
       std::multimap<double, int> sortedPoints;
       vector3d c;
-      unsigned int j_min;
+      unsigned int j_min = 0;
       double distInSphereMin = 100000.;
       for (unsigned int j=0; j<_points.size(); ++j)
       {
@@ -692,7 +692,7 @@ postponed:
     std::vector<SCD::faceVVR> bsVVR;
     VVRsphere stmp;
     VVRcone ctmp;
-    double l;
+    double l = 0.;
     VVRtorus ttmp;
     int scount = 0;
     int tind, i;
@@ -1152,7 +1152,7 @@ postponed:
     std::vector<SCD::faceVVR> bsVVR;
     VVRsphere stmp;
     VVRcone ctmp;
-    double l;
+    double l = 0.;
     VVRtorus ttmp;
     int scount = 0;
     int tind, i;
@@ -1600,7 +1600,7 @@ postponed:
     std::vector<SCD::faceVVR> bsVVR;
     VVRsphere stmp;
     VVRcone ctmp;
-    double l;
+    double l = 0.;
     VVRtorus ttmp;
     int scount = 0;
     int tind, i;
