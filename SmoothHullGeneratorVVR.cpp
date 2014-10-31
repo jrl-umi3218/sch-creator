@@ -12,7 +12,8 @@ namespace SCD
 
 
   SmoothHullGeneratorVVR::SmoothHullGeneratorVVR(double r, double R):
-    _epsilon(1e-8)
+    _epsilon(1e-8),
+    _ccw (false)
   {
     _r = r;
     _R = R;
@@ -32,7 +33,7 @@ namespace SCD
      *(1) becomes au.u+bu.v = u.u/2 and (2) au.v+bv.v = v.v/2. Both equations are solved together
      *c is then compute from (3) while respecting (4) which is equivalent to x.(u*v)<0 <=> c<0
      */
-    double a,b,c,duv,nu,nv,nuv;
+    double a,b,duv,nu,nv,nuv;
     vector3d u,v,uv;
     u = _points[p2]-_points[p1];
     v = _points[p3]-_points[p1];
@@ -60,7 +61,7 @@ namespace SCD
     }
     else
     {
-      c = -sqrt(((_R-_r)*(_R-_r)-a*a*nu-b*b*nv-2*a*b*duv)/nuv);
+      double c = -sqrt(((_R-_r)*(_R-_r)-a*a*nu-b*b*nv-2*a*b*duv)/nuv);
 
       center = u*a + v*b + uv*c + _points[p1];
       return true;
@@ -542,7 +543,6 @@ postponed:
     if (file == 0)
     {
       std::cout << "unable to open file " << filename << std::endl;
-      fclose (file);
       return;
     }
 
@@ -580,7 +580,6 @@ postponed:
   void SmoothHullGeneratorVVR::output(const std::string& rootPath)
   {
     //we first build a map to change the index of points in the spheres, according to the vertex that have been kept
-    int k=0;
     std::vector<int> map;
 
     std::cout << "please enter the name of the output file" << std::endl;
@@ -592,9 +591,10 @@ postponed:
     output.open(name.c_str(),std::ofstream::out);
     if (output.is_open())
     {
+      int k=0;
       output << _r << "," << _R << "\n";
       output << _index.size() << "," << _spheres.size() << "\n";
-      for (unsigned int i=0; 0<_index.size(); ++i)
+      for (unsigned int i=0; !_index.empty(); ++i)
       {
         if (*(_index.begin()) == i)
         {
@@ -655,7 +655,7 @@ postponed:
     std::vector<int> map;
 
     std::cout << "size of _index : " << _index.size() << std::endl;
-    for (unsigned int i=0; 0<_index.size(); ++i)
+    for (unsigned int i=0; !_index.empty(); ++i)
     {
       if (*(_index.begin()) == i)
       {
