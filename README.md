@@ -8,7 +8,7 @@ Documentation
 -------------
 
 This package contains scripts and methods allowing to build convex surfaces 
-from vrml files or blender objects.
+from vrml files or every mesh that blender read.
 It also convert those files into qhull volumes.
 
 Execution
@@ -18,11 +18,7 @@ Several scripts are installed in the `${CMAKE_INSTALL_PREFIX}/bin` directory
 Those scripts allow to convert vrml files into cloud files (simplified geometry
 files).
 
-### Building from vrml files
-
-FIXME: write this.
-
-### Building from blender files:
+### Setup blender to convert mesh in the input file format
 
 - install this package (see instructions below)
 - open blender
@@ -33,7 +29,10 @@ FIXME: write this.
 - click on «Save As Default» button
 - close blend
 
-### Converting
+### Conveting qc file in sch hull (command line)
+- run `sch_creator -r r -R R input_file.qc output_file.txt` where r is the little sphere radius and R the surface curvature
+
+### Converting (batch)
 
 - run `script/blender_2cloud.sh output_directory file1 file2 ... fileN`
 - output_directory must be fill with .qc files
