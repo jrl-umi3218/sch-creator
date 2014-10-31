@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/env python
 
 class Vrml(object):
   def __init__(self):
@@ -27,12 +27,12 @@ class Vrml(object):
       elif len(pii) == 0:
         pass
       elif len(pii) > 3:
-        print "The number of points of one face exceed 3..."
+        print("The number of points of one face exceed 3...")
       elif ']' in pii:
         self._isPoint = False
       else:
-        print "pii ", pii
-        print "wut?"
+        print("pii ", pii)
+        print("wut?")
 
 
 class Cloud(object):
@@ -48,7 +48,7 @@ if __name__ == '__main__':
   import sys
 
   if len(sys.argv) != 3:
-    print 'Usage : %s file.wrl file.txt' % sys.argv[0]
+    print('Usage : %s file.wrl file.txt' % sys.argv[0])
     sys.exit(1)
 
   vrml = Vrml()

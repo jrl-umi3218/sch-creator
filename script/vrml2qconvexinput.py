@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/env python
 class Vrml(object):
   def __init__(self):
     self.points = []
@@ -37,7 +37,7 @@ if __name__ == '__main__':
   import sys
 
   if len(sys.argv) != 3:
-    print 'Usage : %s input.wrl out' % sys.argv[0]
+    print('Usage : %s input.wrl out' % sys.argv[0])
     sys.exit(1)
 
   vrml = Vrml()
