@@ -40,8 +40,11 @@ class Cloud(object):
     self._points = points
 
   def save(self, file):
+    # File format :
+    # dimension \n number of points \n points coordinates
+    file.write('3 \n')
     file.write('%s\n' % len(self._points))
-    data = ['%s %s %s' % (p[0], p[1], p[2]) for p in self._points]
+    data = ['%s %s %s\n' % (p[0], p[1], p[2]) for p in self._points]
     file.write(''.join(data))
 
 if __name__ == '__main__':
@@ -59,5 +62,5 @@ if __name__ == '__main__':
     cloud = Cloud(vrml.points)
     cloud.save(f)
 
-    
+
 
