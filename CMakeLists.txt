@@ -19,7 +19,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS OFF)
 
 
 include(cmake/base.cmake)
-#INCLUDE(cmake/eigen.cmake)
+INCLUDE(cmake/qhull.cmake)
 include(cmake/msvc-specific.cmake)
 list(APPEND CMAKE_MODULE_PATH "C:/devel/install/share/eigen3/cmake")
 message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
