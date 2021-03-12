@@ -1,4 +1,4 @@
-#include <SmoothHullGeneratorVVR.h>
+#include <sch-creator/SmoothHullGeneratorVVR.h>
 #include <iostream>
 #include <vector>
 #include <string>
