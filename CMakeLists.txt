@@ -4,16 +4,17 @@ if(POLICY CMP0063)
   cmake_policy(SET CMP0063 NEW)
 endif()
 
-SET(PROJECT_NAME sch_creator)
+
+SET(PROJECT_NAME sch-creator)
 SET(PROJECT_DESCRIPTION "Creation of Strictly Convex Hulls (Sphere-Torus Patches Bounding Volumes)")
 set(PROJECT_URL "https://github.com/jrl-umi3218/sch-core")
-set(PROJECT_USE_CMAKE_EXPORT TRUE)
+
 
 set(PROJECT_VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CXX_DISABLE_WERROR TRUE)
-set(PROJECT_USE_CMAKE_EXPORT TRUE)
+#set(PROJECT_USE_CMAKE_EXPORT TRUE)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set_property(GLOBAL PROPERTY USE_FOLDERS OFF)
 
