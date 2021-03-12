@@ -52,8 +52,8 @@ file(
   GENERATE
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/include/sch-creator/config.h"
   INPUT "${CMAKE_CURRENT_SOURCE_DIR}/include/sch-creator/config.h.in")
-install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/include/sch-creator/config.h"
-        DESTINATION ${INCLUDE_INSTALL_DESTINATION})
+#install(FILES "${CMAKE_BINARY_DIR}/$<CONFIG>/include/sch-creator/config.h"
+#        DESTINATION ${INCLUDE_INSTALL_DESTINATION})
 
 add_subdirectory(src)
 
