@@ -53,6 +53,12 @@ endif()
 
 ADD_REQUIRED_DEPENDENCY("sch-core")
 
+# For MSVC, set local environment variable to enable finding the built dll
+# of the main library when launching ctest with RUN_TESTS
+if(MSVC)
+  set(CMAKE_MSVCIDE_RUN_PATH "\$(SolutionDir)/src/\$(Configuration)")
+endif(MSVC)
+
 file(
   GENERATE
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/include/sch-creator/config.h"
