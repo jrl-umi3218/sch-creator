@@ -1,8 +1,6 @@
-set(PROJECT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME})
-
 set(HEADERS
-    ${PROJECT_INCLUDE_DIR}/SmoothHullGeneratorVVR.h
-    ${PROJECT_INCLUDE_DIR}/vector3.h)
+    ${PROJECT_INCLUDE_DIR}/${PROJECT_NAME}/SmoothHullGeneratorVVR.h
+    ${PROJECT_INCLUDE_DIR}/${PROJECT_NAME}/vector3.h)
 
 set(COMMON_SRC
     SmoothHullGeneratorVVR.cpp)
