@@ -8,6 +8,10 @@ endif()
 SET(PROJECT_NAME sch-creator)
 SET(PROJECT_DESCRIPTION "Creation of Strictly Convex Hulls (Sphere-Torus Patches Bounding Volumes)")
 set(PROJECT_URL "https://github.com/jrl-umi3218/sch-core")
+set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+if (NOT DEFINED PROJECT_DEBUG_POSTFIX)
+    set(PROJECT_DEBUG_POSTFIX "_d")
+endif()
 
 
 set(PROJECT_VERSION 1.0.0)
