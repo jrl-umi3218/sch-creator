@@ -43,6 +43,9 @@ if(MSVC)
   set(CMAKE_MSVCIDE_RUN_PATH "\$(SolutionDir)/src/\$(Configuration)")
 endif(MSVC)
 
+# We add a recent version of FindBoost.cmake in our path
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
+
 add_project_dependency(Boost REQUIRED COMPONENTS program_options)
 add_project_dependency(Eigen3 QUIET NO_CMAKE_PACKAGE_REGISTRY)
 if(Eigen3_FOUND)
