@@ -1,3 +1,4 @@
+#include <sch-creator/sch-creator-2d.h>
 #include <Eigen/Core>
 #include <iostream>
 #include <list>
@@ -9,392 +10,252 @@
 using namespace std;
 using namespace Eigen;
 
-struct Triangle
+namespace SCH
 {
-  Vector2d a, b, c;
-  double d; // circumcircle diameter
-  bool inHeap = true;
+	/* Strictly Convex Hull */
+	SchCreator2D::SchCreator2D(vector<Vector2d> points, double alpha)
+	{
+		_alpha = alpha;
+		_points = points;
+	}
 
-  Triangle(Vector2d A, Vector2d B, Vector2d C)
-  {
-    a = A;
-    b = B;
-    c = C;
-    d = findCircumcircleRadius();
-  }
+	void SchCreator2D::swap(Radius &a, Radius &b) 
+	{
+		Radius temp = a;
+		a = b;
+		b = temp;
+	}
 
-  double findCircumcircleRadius()
-  {
-    double A = (a - b).norm();
-    double B = (b - c).norm();
-    double C = (a - c).norm();
-    double s = (A + B + C) / 2;
-    return (A * B * C) / (4 * sqrt(s * (s - A) * (s - B) * (s - C)));
-  }
+	/* Heap insertion while maintaining heap */
+	void SchCreator2D::insertElementToHeap(vector<Radius> &heap, Radius a) {
+		heap.push_back(a);
+		if(heap.size() > 1){
+			int childIndex = heap.size();
+			int parentIndex = int(childIndex / 2);
+			
+			while(heap[parentIndex - 1].radius < a.radius){
+				swap(heap[parentIndex - 1], heap[childIndex - 1]);
+				if(parentIndex - 2 < 0) break;
+				childIndex = parentIndex;
+				parentIndex = int(childIndex / 2);
+			}
+		}
+	}
 
-  void removeFromHeap()
-  {
-    inHeap = false;
-  }
-};
+	/* Listing triangles and inserting their circumcircle radius to the heap */
+	list<Triangle> SchCreator2D::listTriangles(vector<Point> points, vector<Radius> &heap) {
+		list<Triangle> triangles;
+		int n = points.size();
+		
+		for (int i = 0; i < n; i++) {
+			Triangle t = Triangle(points[i % n].point, points[(i + 1) % n].point, points[(i + 2) % n].point);
+			Radius r = Radius(i % n, (i + 1) % n, (i + 2) % n, i, t.d);
+			triangles.push_back(t);
+			insertElementToHeap(heap, r);
+		}
 
-struct Radius
-{
-  int frontpointIndex, midpointIndex, endpointIndex, triangleIndex;
-  double radius;
+		return triangles;
+	}
 
-  Radius(int fpIndex, int mpIndex, int epIndex, int tIndex, double R)
-  {
-    frontpointIndex = fpIndex;
-    midpointIndex = mpIndex;
-    endpointIndex = epIndex;
-    triangleIndex = tIndex;
-    radius = R;
-  }
-};
+	/* Changes the inHull Boleean in the respective point */
+	void SchCreator2D::removePointFromHull(vector<Point> &points, list<Triangle> &triangles, const Radius &heap) {
+		list<Triangle>::iterator it;
+		int trianglesSize = triangles.size();
+		int trianglesIndex =  trianglesSize + heap.triangleIndex;
+		for(int i = -1; i <= 1; i++){
+			it = triangles.begin();
+			if((trianglesIndex + i) >= 2 * points.size() && heap.triangleIndex < points.size()) {
+				advance(it, (points.size() + heap.triangleIndex + i) % points.size());
+			} else{
+				advance(it, (trianglesIndex + i) % trianglesSize);
+			}	
 
-struct Point
-{
-  Vector2d point;
-  bool inHull = true;
+			(*it).removeFromHeap();
+		}
+		points[heap.midpointIndex].removeFromHull();
+	}
 
-  Point(Vector2d p)
-  {
-    point = p;
-  }
+	/* Heap operation, comparing node to left and right child */
+	void SchCreator2D::compareToChild(vector<Radius> &heap) {
+		int parentIndex = 1;
+		int childIndex = 2 * parentIndex;
+		while(childIndex < heap.size() && heap[parentIndex - 1].radius < heap[childIndex - 1].radius || heap[parentIndex - 1].radius < heap[childIndex].radius){
+			if(heap[childIndex - 1].radius < heap[childIndex].radius) childIndex++;
+			while(heap[parentIndex - 1].radius < heap[childIndex - 1].radius){
+				swap(heap[parentIndex - 1], heap[childIndex - 1]);
+				parentIndex = childIndex;
+				childIndex = 2 * parentIndex;
+			}
+		}
+	}
 
-  void removeFromHull()
-  {
-    inHull = false;
-  }
-};
+	/* Remove max heap while mantaining heap */
+	void SchCreator2D::removeHeap(vector<Radius> &heap){
+		swap(heap.front(), heap.back());
+		heap.pop_back();
+		int parentIndex = 1;
+		int childIndex = 2 * parentIndex;
+		while(childIndex + 1 < heap.size() && (heap[parentIndex - 1].radius < heap[childIndex - 1].radius || heap[parentIndex - 1].radius < heap[childIndex].radius)){
+			if(heap[childIndex - 1].radius < heap[childIndex].radius) childIndex++;
+			if(heap[parentIndex - 1].radius < heap[childIndex - 1].radius){
+				swap(heap[parentIndex - 1], heap[childIndex - 1]);
+				parentIndex = childIndex;
+				childIndex = 2 * parentIndex;
+			}
+		}
+	}
 
-bool checkHull(const vector<Vector2d> & points,
-               vector<Point> originalPoints,
-               list<Triangle> triangles,
-               const vector<Radius> & heap);
+	/* Verifies all points corresponding to the max heap exist in the sch */
+	bool SchCreator2D::checkIfMaxHeapIsInHull(vector<Radius> &heap, vector<Point> points, list<Triangle> &triangles){
+		list<Triangle>::iterator it = triangles.begin();
+		advance(it, heap[0].triangleIndex);
+		bool trianglePointsExist = points[heap[0].frontpointIndex].inHull && (points[heap[0].midpointIndex].inHull && points[heap[0].endpointIndex].inHull);
+		return (*it).inHeap && trianglePointsExist;
+	}
 
-void printPoints(const vector<Point> & points)
-{
-  int n = 0;
-  for(auto i = points.begin(); i != points.end(); i++)
-  {
-    if((*i).inHull)
-    {
-      cout << "Point " << n << endl;
-      cout << (*i).point << endl;
-      cout << "Length: " << (*i).point.norm() << endl;
-      cout << "inHull: " << (*i).inHull << endl;
-      cout << '\n' << endl;
-    }
+	/* Finds the closest previous point in the Hull*/
+	int SchCreator2D::findPreviousPoint(const vector<Point> &points, int pointIndex) {
+		while(!points[pointIndex % points.size()].inHull) {
+			pointIndex--;
+		}
+		return pointIndex;
+	}
 
-    n++;
-  }
+	/* Finds the closest next point in the Hull */
+	int SchCreator2D::findNextPoint(const vector<Point> &points, int pointIndex) {
+		while(!points[pointIndex % points.size()].inHull) {
+			pointIndex++;
+		}
+		return pointIndex;
+	}
+
+	/* Makes two new triangles based on the point that must be deleted from the sch */
+	void SchCreator2D::makeTriangles(const vector<Point> &points, list<Triangle> &triangles, vector<Radius> &heap, int previousMidpoint) {
+		int n = points.size();
+
+		int newMidpoint = findPreviousPoint(points, n + previousMidpoint - 1);
+
+		int newFrontpoint = findPreviousPoint(points, newMidpoint - 1);
+
+		int newEndpoint = findNextPoint(points, n + previousMidpoint + 1); 
+
+		Triangle newTriangle1 = Triangle(points[newFrontpoint % n].point, points[newMidpoint % n].point, points[newEndpoint % n].point);
+		Radius newRadius1 = Radius(newFrontpoint % n, newMidpoint % n, newEndpoint % n, triangles.size(), newTriangle1.d);
+
+		newFrontpoint = newMidpoint;
+		newMidpoint = newEndpoint;
+		newEndpoint = findNextPoint(points, newMidpoint + 1);
+
+		Triangle newTriangle2 = Triangle(points[newFrontpoint % n].point, points[newMidpoint % n].point, points[newEndpoint % n].point);
+		Radius newRadius2 = Radius(newFrontpoint % n, newMidpoint % n, newEndpoint % n, triangles.size() + 1, newTriangle2.d);
+
+		triangles.push_back(newTriangle1);
+		triangles.push_back(newTriangle2);
+		insertElementToHeap(heap, newRadius1);
+		insertElementToHeap(heap, newRadius2);
+	}
+
+	/* Stores the index of the max heap midpoint, removes it from the heap and gets the two new triangles*/
+	void SchCreator2D::updateTriangles(const vector<Point> &points, list<Triangle> &triangles, vector<Radius> &heap ){
+		int eliminatedPointIndex = heap.front().midpointIndex;
+		removeHeap(heap);
+		makeTriangles(points, triangles, heap, eliminatedPointIndex);
+	}
+
+	
+
+	vector<Vector2d> SchCreator2D::FindSch2D(){
+		vector<Point> points;
+		for(auto i = _points.begin(); i != _points.end(); i++) points.push_back(Point((*i)));
+
+		if(points.size() < 3) {
+			cout << "You need at least 3 points.\n" << endl;
+			return {};
+		} 
+		vector<Vector2d> strictlyConvexHull;
+		int pointsInSCH = points.size();
+
+		vector<Radius> radiusHeap;
+		list<Triangle> triangles = listTriangles(points, radiusHeap);
+		
+		while(radiusHeap[0].radius > _alpha && checkIfMaxHeapIsInHull(radiusHeap, points, triangles)) {
+			removePointFromHull(points, triangles, radiusHeap[0]);
+			updateTriangles(points, triangles, radiusHeap);
+			pointsInSCH--;
+
+			if(pointsInSCH < 3) {
+				cout << "\nAlpha is too small.\n" << endl;
+				return {};
+			}
+
+			while(!checkIfMaxHeapIsInHull(radiusHeap, points, triangles)) {
+				removeHeap(radiusHeap);
+			}
+		}
+
+		for (auto i = points.begin(); i != points.end(); i++) {
+			if((*i).inHull){
+				strictlyConvexHull.push_back((*i).point);
+			}
+		}
+
+		return strictlyConvexHull;
+	}
+
+	bool SchCreator2D::checkHull(const vector<Vector2d> &points) {
+		int n = points.size();
+		Vector2d circleCenter;
+		
+		for(int i = 0; i < n; i++) {
+			Vector2d p1 = points[i % n];
+			Vector2d p2 = points[(i + 1) % n];
+			Vector2d pa = (p2-p1)/2;
+			Vector2d rhombusCenter = p1 + pa;
+			double a = pa.norm();
+			double b = sqrt(pow(_alpha,2) - pow(a,2));
+
+			Vector2d distanceToRhombusCenter = Vector2d(b * (p2[1] - rhombusCenter[1]) / a, -b * (p2[0] - rhombusCenter[0]) / a); 
+			circleCenter = rhombusCenter + distanceToRhombusCenter;
+
+			double m = _points.size();
+			for(int j = 0; j < m; j++) {
+				double distancePointToCenter = (_points[j] - circleCenter).norm();
+
+				if(distancePointToCenter > _alpha + 1e-5) return false;
+			}
+		}
+
+		return true;
+	}
+
+	
 }
 
-void printTriangles(const list<Triangle> & triangles)
-{
-  int n = 0;
-  for(auto i = triangles.begin(); i != triangles.end(); i++)
-  {
-    if((*i).inHeap)
-    {
-      cout << "Triangle " << n << ": " << endl;
-      cout << "a\t\tb\t\tc" << endl;
-      cout << (*i).a.norm() << "\t\t" << (*i).b.norm() << "\t\t" << (*i).c.norm() << endl;
-      cout << "Circum circle: " << (*i).d << endl;
-      cout << "inHeap: " << (*i).inHeap << '\n' << endl;
-    }
-    n++;
-  }
-}
+int main() {
+	string pointsInfo;
+	ifstream readFile;
+	double x, y;
+	vector<Vector2d> points;
 
-void printHeap(const vector<Radius> heap)
-{
-  cout << "\nHeap of cc Radius" << endl;
-  for(auto i = heap.begin(); i != heap.end(); i++)
-  {
-    cout << "midpointIndex\ttriangleIndex\tcircumCircle Radius" << endl;
-    cout << (*i).midpointIndex << "\t\t" << (*i).triangleIndex << "\t\t" << (*i).radius << endl;
-  }
-}
+	readFile.open("points.txt");
+	if(!readFile) {
+		cout << "File not found." << endl;
+		exit(1);
+	}
 
-void swap(Radius * a, Radius * b)
-{
-  Radius temp = *a;
-  *a = *b;
-  *b = temp;
-}
+	while(getline(readFile, pointsInfo)) {
+		// get substring and convert to double
+		x = atof(pointsInfo.substr(0, pointsInfo.find(' ')).c_str());
+		y = atof(pointsInfo.substr(pointsInfo.find(' ') + 1, pointsInfo.length()).c_str());
+		// add point to vector
+		points.push_back(Vector2d(x, y));
+	}
+	SCH::SchCreator2D sch(points,4.5);
+	vector<Vector2d> schPoints = sch.FindSch2D();
+	cout << "Is hull strictly convex? " << sch.checkHull(schPoints) <<endl;
 
-void insertElementToHeap(vector<Radius> & heap, Radius a)
-{
-  heap.push_back(a);
-  if(heap.size() > 1)
-  {
-    int childIndex = heap.size();
-    int parentIndex = int(childIndex / 2);
+	cout << "\nPoints in strictly convex hull" << endl;
+	for(auto i = schPoints.begin(); i != schPoints.end(); i++) cout << *i << '\n' << endl;
 
-    while(heap[parentIndex - 1].radius < a.radius)
-    {
-      // cout << heap[parentIndex - 1].r << " < " << heap[childIndex - 1].r <<endl;
-      swap(heap[parentIndex - 1], heap[childIndex - 1]);
-      if(parentIndex - 2 < 0) break;
-      childIndex = parentIndex;
-      parentIndex = int(childIndex / 2);
-    }
-  }
-}
-
-// void compareToChild
-
-list<Triangle> listTriangles(vector<Point> points, vector<Radius> & heap)
-{
-  list<Triangle> triangles;
-  int n = points.size();
-
-  for(int i = 0; i < n; i++)
-  {
-    Triangle t = Triangle(points[i % n].point, points[(i + 1) % n].point, points[(i + 2) % n].point);
-    Radius r = Radius(i % n, (i + 1) % n, (i + 2) % n, i, t.d);
-    triangles.push_back(t);
-    insertElementToHeap(heap, r);
-  }
-
-  return triangles;
-}
-
-void removePointFromHull(vector<Point> & points, list<Triangle> & triangles, const Radius & heap)
-{
-  list<Triangle>::iterator it;
-  int trianglesSize = triangles.size();
-  int trianglesIndex = trianglesSize + heap.triangleIndex;
-  for(int i = -1; i <= 1; i++)
-  {
-    it = triangles.begin();
-    cout << "\nREMOVE FROM HULL" << endl;
-    cout << "(trianglesIndex + i) >= 2 * points.size() && heap.triangleIndex < points.size()" << endl;
-    cout << (trianglesIndex + i) << " >= " << 2 * points.size() << " && " << heap.triangleIndex << " < "
-         << points.size() << endl;
-    if((trianglesIndex + i) >= 2 * points.size() && heap.triangleIndex < points.size())
-    {
-      advance(it, (points.size() + heap.triangleIndex + i) % points.size());
-      cout << "Triangle " << (points.size() + heap.triangleIndex + i) % points.size() << endl;
-    }
-    else
-    {
-      cout << "Triangle " << (trianglesIndex + i) % trianglesSize << endl;
-      advance(it, (trianglesIndex + i) % trianglesSize);
-    }
-
-    (*it).removeFromHeap();
-  }
-  points[heap.midpointIndex].removeFromHull();
-}
-
-void compareToChild(vector<Radius> & heap)
-{
-  int parentIndex = 1;
-  int childIndex = 2 * parentIndex;
-  while(childIndex < heap.size() && heap[parentIndex - 1].radius < heap[childIndex - 1].radius
-        || heap[parentIndex - 1].radius < heap[childIndex].radius)
-  {
-    if(heap[childIndex - 1].radius < heap[childIndex].radius) childIndex++;
-    while(heap[parentIndex - 1].radius < heap[childIndex - 1].radius)
-    {
-      swap(heap[parentIndex - 1], heap[childIndex - 1]);
-      parentIndex = childIndex;
-      childIndex = 2 * parentIndex;
-    }
-  }
-}
-
-void removeHeap(vector<Radius> & heap)
-{
-  swap(heap.front(), heap.back());
-  heap.pop_back();
-  int parentIndex = 1;
-  int childIndex = 2 * parentIndex;
-  while(childIndex + 1 < heap.size()
-        && (heap[parentIndex - 1].radius < heap[childIndex - 1].radius
-            || heap[parentIndex - 1].radius < heap[childIndex].radius))
-  {
-    if(heap[childIndex - 1].radius < heap[childIndex].radius) childIndex++;
-    if(heap[parentIndex - 1].radius < heap[childIndex - 1].radius)
-    {
-      swap(heap[parentIndex - 1], heap[childIndex - 1]);
-      parentIndex = childIndex;
-      childIndex = 2 * parentIndex;
-    }
-  }
-}
-
-bool checkIfHeapExists(vector<Radius> & heap, vector<Point> points, list<Triangle> & triangles)
-{
-  list<Triangle>::iterator it = triangles.begin();
-  advance(it, heap[0].triangleIndex);
-  // cout << "Triangle " << heap[0].triangleIndex << endl;
-  // cout << "Circumcircle radius: " << (*it).d;
-  // cout << "\tIn Heap: " << (*it).inHeap << endl;
-  bool trianglePointsExist = points[heap[0].frontpointIndex].inHull
-                             && (points[heap[0].midpointIndex].inHull && points[heap[0].endpointIndex].inHull);
-  return (*it).inHeap && trianglePointsExist;
-}
-
-int findPreviousPoint(const vector<Point> & points, int pointIndex)
-{
-  while(!points[pointIndex % points.size()].inHull)
-  {
-    pointIndex--;
-  }
-  return pointIndex;
-}
-
-int findNextPoint(const vector<Point> & points, int pointIndex)
-{
-  while(!points[pointIndex % points.size()].inHull)
-  {
-    pointIndex++;
-  }
-  return pointIndex;
-}
-
-void makeTriangles(const vector<Point> & points,
-                   list<Triangle> & triangles,
-                   vector<Radius> & heap,
-                   int previousMidpoint)
-{
-  int n = points.size();
-
-  int newMidpoint = findPreviousPoint(points, n + previousMidpoint - 1);
-
-  int newFrontpoint = findPreviousPoint(points, newMidpoint - 1);
-
-  int newEndpoint = findNextPoint(points, n + previousMidpoint + 1);
-
-  Triangle newTriangle1 =
-      Triangle(points[newFrontpoint % n].point, points[newMidpoint % n].point, points[newEndpoint % n].point);
-  Radius newRadius1 = Radius(newFrontpoint % n, newMidpoint % n, newEndpoint % n, triangles.size(), newTriangle1.d);
-
-  newFrontpoint = newMidpoint;
-  newMidpoint = newEndpoint;
-  newEndpoint = findNextPoint(points, newMidpoint + 1);
-
-  Triangle newTriangle2 =
-      Triangle(points[newFrontpoint % n].point, points[newMidpoint % n].point, points[newEndpoint % n].point);
-  Radius newRadius2 = Radius(newFrontpoint % n, newMidpoint % n, newEndpoint % n, triangles.size() + 1, newTriangle2.d);
-
-  triangles.push_back(newTriangle1);
-  triangles.push_back(newTriangle2);
-  insertElementToHeap(heap, newRadius1);
-  insertElementToHeap(heap, newRadius2);
-}
-
-void updateTriangles(const vector<Point> & points, list<Triangle> & triangles, vector<Radius> & heap)
-{
-  int eliminatedPointIndex = heap.front().midpointIndex;
-  removeHeap(heap);
-  makeTriangles(points, triangles, heap, eliminatedPointIndex);
-  cout << "\nUPDATE TRIANGLES\n" << endl;
-  printTriangles(triangles);
-  printHeap(heap);
-}
-
-vector<Vector2d> sch(vector<Point> & points)
-{
-  if(points.size() < 3)
-  {
-    cout << "You need at least 3 points.\n" << endl;
-    return {};
-  }
-  double alpha = 5.2;
-  vector<Vector2d> strictlyConvexHull;
-
-  vector<Radius> radiusHeap;
-  list<Triangle> triangles = listTriangles(points, radiusHeap);
-
-  printPoints(points);
-  printTriangles(triangles);
-  printHeap(radiusHeap);
-
-  while(radiusHeap[0].radius > alpha && checkIfHeapExists(radiusHeap, points, triangles))
-  {
-    cout << "\nRemove Point " << radiusHeap[0].midpointIndex << endl;
-    removePointFromHull(points, triangles, radiusHeap[0]);
-    updateTriangles(points, triangles, radiusHeap);
-
-    while(!checkIfHeapExists(radiusHeap, points, triangles))
-    {
-      removeHeap(radiusHeap);
-      cout << "\nHEAP DOESN'T EXIST. NEW HEAP" << endl;
-      printHeap(radiusHeap);
-    }
-  }
-  for(auto i = points.begin(); i != points.end(); i++)
-  {
-    if((*i).inHull)
-    {
-      strictlyConvexHull.push_back((*i).point);
-    }
-  }
-
-  if(checkHull(strictlyConvexHull, points, triangles, radiusHeap))
-    cout << "Convex" << endl;
-  else
-    cout << "Not convex" << endl;
-
-  return strictlyConvexHull;
-}
-
-bool checkHull(const vector<Vector2d> & points,
-               vector<Point> originalPoints,
-               list<Triangle> triangles,
-               const vector<Radius> & heap)
-{
-  cout << "\nCHECK IF HULL IS STRICTLY CONVEX\n" << endl;
-  list<Triangle>::iterator it = triangles.begin();
-  vector<Radius> realHeap;
-  for(int i = 0; i < heap.size(); i++)
-  {
-    advance(it, heap[i].triangleIndex);
-    if((*it).inHeap)
-    {
-      realHeap.push_back(heap[i]);
-    }
-    it = triangles.begin();
-  }
-
-  printHeap(realHeap);
-
-  for(int i = 0; i < realHeap.size(); i++)
-  {
-    cout << "\nHull Point: " << endl;
-    cout << originalPoints[realHeap[i].midpointIndex].point << '\n' << endl;
-    for(int j = 0; j < originalPoints.size(); j++)
-    {
-      double d = (originalPoints[j].point - originalPoints[realHeap[i].midpointIndex].point).norm();
-      cout << d << " > " << 2 * realHeap[i].radius << endl;
-      if(d > 2 * realHeap[i].radius)
-      {
-        cout << "not in Hull" << endl;
-        return false;
-      }
-      else
-        cout << "in Hull" << endl;
-    }
-    cout << '\n' << endl;
-  }
-  return true;
-}
-
-int main()
-{
-  vector<Point> points = {Point(Vector2d(0.5, 3.25)), Point(Vector2d(7.54, 0.63)), Point(Vector2d(4.14, 4.84)),
-                          Point(Vector2d(1.14, 6.36)), Point(Vector2d(1.12, 4.45))};
-
-  vector<Vector2d> schPoints = sch(points);
-
-  cout << "\nPoints in strictly convex Hull" << endl;
-  for(auto i = schPoints.begin(); i != schPoints.end(); i++) cout << *i << '\n' << endl;
-
-  return 0;
+	return 0;
 }

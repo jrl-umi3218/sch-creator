@@ -9,10 +9,10 @@ set(COMMON_SRC
 
 macro(ADD_SCH_CREATOR_EXEC name)
   add_executable(${name} ${name}.cpp ${COMMON_SRC} ${HEADERS} )
-  target_link_libraries(${name} PUBLIC Boost::program_options)
+  target_link_libraries(${name} PUBLIC)
   target_include_directories(${name} PUBLIC "${EIGEN3_INCLUDE_DIR}")
   INSTALL(TARGETS ${name} DESTINATION bin)
 endmacro()
 
-ADD_SCH_CREATOR_EXEC(sch-creator)
+#ADD_SCH_CREATOR_EXEC(sch-creator)
 ADD_SCH_CREATOR_EXEC(sch-creator-2d)
