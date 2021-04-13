@@ -1,11 +1,4 @@
 #include <sch-creator/sch-creator-2d.h>
-#include <Eigen/Core>
-#include <iostream>
-#include <list>
-#include <math.h>
-#include <memory>
-#include <string>
-#include <vector>
 
 using namespace std;
 using namespace Eigen;
@@ -30,8 +23,8 @@ namespace SCH
 	void SchCreator2D::insertElementToHeap(vector<Radius> &heap, Radius a) {
 		heap.push_back(a);
 		if(heap.size() > 1){
-			int childIndex = heap.size();
-			int parentIndex = int(childIndex / 2);
+			size_t childIndex = heap.size();
+			unsigned int parentIndex = (childIndex / 2);
 			
 			while(heap[parentIndex - 1].radius < a.radius){
 				swap(heap[parentIndex - 1], heap[childIndex - 1]);
@@ -45,7 +38,7 @@ namespace SCH
 	/* Listing triangles and inserting their circumcircle radius to the heap */
 	list<Triangle> SchCreator2D::listTriangles(vector<Point> points, vector<Radius> &heap) {
 		list<Triangle> triangles;
-		int n = points.size();
+		unsigned int n = points.size();
 		
 		for (int i = 0; i < n; i++) {
 			Triangle t = Triangle(points[i % n].point, points[(i + 1) % n].point, points[(i + 2) % n].point);
@@ -60,7 +53,7 @@ namespace SCH
 	/* Changes the inHull Boleean in the respective point */
 	void SchCreator2D::removePointFromHull(vector<Point> &points, list<Triangle> &triangles, const Radius &heap) {
 		list<Triangle>::iterator it;
-		int trianglesSize = triangles.size();
+		unsigned int trianglesSize = triangles.size();
 		int trianglesIndex =  trianglesSize + heap.triangleIndex;
 		for(int i = -1; i <= 1; i++){
 			it = triangles.begin();
@@ -131,7 +124,7 @@ namespace SCH
 
 	/* Makes two new triangles based on the point that must be deleted from the sch */
 	void SchCreator2D::makeTriangles(const vector<Point> &points, list<Triangle> &triangles, vector<Radius> &heap, int previousMidpoint) {
-		int n = points.size();
+		unsigned int n = points.size();
 
 		int newMidpoint = findPreviousPoint(points, n + previousMidpoint - 1);
 
@@ -173,7 +166,7 @@ namespace SCH
 			return {};
 		} 
 		vector<Vector2d> strictlyConvexHull;
-		int pointsInSCH = points.size();
+		unsigned int pointsInSCH = points.size();
 
 		vector<Radius> radiusHeap;
 		list<Triangle> triangles = listTriangles(points, radiusHeap);
@@ -203,7 +196,7 @@ namespace SCH
 	}
 
 	bool SchCreator2D::checkHull(const vector<Vector2d> &points) {
-		int n = points.size();
+		unsigned int n = points.size();
 		Vector2d circleCenter;
 		
 		for(int i = 0; i < n; i++) {
@@ -217,7 +210,7 @@ namespace SCH
 			Vector2d distanceToRhombusCenter = Vector2d(b * (p2[1] - rhombusCenter[1]) / a, -b * (p2[0] - rhombusCenter[0]) / a); 
 			circleCenter = rhombusCenter + distanceToRhombusCenter;
 
-			double m = _points.size();
+			unsigned int m = _points.size();
 			for(int j = 0; j < m; j++) {
 				double distancePointToCenter = (_points[j] - circleCenter).norm();
 

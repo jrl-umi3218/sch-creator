@@ -32,10 +32,10 @@ namespace SCH
 
     struct Point
     {
-        Vector2d point;
+        Eigen::Vector2d point;
         bool inHull = true;
 
-        Point(Vector2d p)
+        Point(Eigen::Vector2d p)
         {
             point = p;
         }
@@ -55,11 +55,11 @@ namespace SCH
 
     struct Triangle
     {
-        Vector2d a, b, c;
+        Eigen::Vector2d a, b, c;
         double d; // circumcircle diameter
         bool inHeap = true;
 
-        Triangle(Vector2d A, Vector2d B, Vector2d C)
+        Triangle(Eigen::Vector2d A, Eigen::Vector2d B, Eigen::Vector2d C)
         {
             a = A;
             b = B;
@@ -119,18 +119,18 @@ namespace SCH
     class SchCreator2D
     {
         private:
-            std::vector<Vector2d> _points;
+            std::vector<Eigen::Vector2d> _points;
             double _alpha; 
         public:
         // WARNING! Be sure that points entered belong to convex hull
-            SchCreator2D(std::vector<Vector2d> points, double alpha);
+            SchCreator2D(std::vector<Eigen::Vector2d> points, double alpha);
 
         public:
             std::list<Triangle> SchCreator2D::listTriangles(std::vector<Point> points, std::vector<Radius> &heap);
             void makeTriangles(const std::vector<Point> &points, std::list<Triangle> &triangles, std::vector<Radius> &heap, int previousMidpoint);
             void updateTriangles(const std::vector<Point> &points, std::list<Triangle> &triangles, std::vector<Radius> &heap);
-            std::vector<Vector2d> FindSch2D();
-            bool checkHull(const std::vector<Vector2d> &points);
+            std::vector<Eigen::Vector2d> FindSch2D();
+            bool checkHull(const std::vector<Eigen::Vector2d> &points);
 
         private:
             void swap(Radius &a, Radius &b);

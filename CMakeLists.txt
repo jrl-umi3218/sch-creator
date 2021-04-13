@@ -8,6 +8,10 @@ endif()
 SET(PROJECT_NAME sch-creator)
 SET(PROJECT_DESCRIPTION "Creation of Strictly Convex Hulls (Sphere-Torus Patches Bounding Volumes)")
 set(PROJECT_URL "https://github.com/jrl-umi3218/sch-core")
+set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+if (NOT DEFINED PROJECT_DEBUG_POSTFIX)
+    set(PROJECT_DEBUG_POSTFIX "_d")
+endif()
 
 
 set(PROJECT_VERSION 1.0.0)
@@ -39,7 +43,10 @@ if(MSVC)
   set(CMAKE_MSVCIDE_RUN_PATH "\$(SolutionDir)/src/\$(Configuration)")
 endif(MSVC)
 
-add_project_dependency(Boost REQUIRED)
+# We add a recent version of FindBoost.cmake in our path
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
+
+add_project_dependency(Boost REQUIRED COMPONENTS program_options)
 add_project_dependency(Eigen3 QUIET NO_CMAKE_PACKAGE_REGISTRY)
 if(Eigen3_FOUND)
   add_project_dependency(Eigen3 REQUIRED NO_CMAKE_PACKAGE_REGISTRY)
@@ -48,6 +55,12 @@ else()
 endif()
 
 ADD_REQUIRED_DEPENDENCY("sch-core")
+
+# For MSVC, set local environment variable to enable finding the built dll
+# of the main library when launching ctest with RUN_TESTS
+if(MSVC)
+  set(CMAKE_MSVCIDE_RUN_PATH "\$(SolutionDir)/src/\$(Configuration)")
+endif(MSVC)
 
 file(
   GENERATE
