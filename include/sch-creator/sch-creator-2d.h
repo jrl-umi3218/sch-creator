@@ -16,6 +16,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
+#include <queue>
 
 /*! \namespace SCH
  *  \brief Strictly Convex Hull Namespace
@@ -106,16 +108,19 @@ public:
 
   struct Radius
   {
-    int frontpointIndex, midpointIndex, endpointIndex, triangleIndex;
+    size_t frontpointIndex, midpointIndex, endpointIndex, triangleIndex;
     double radius;
 
-    Radius(int fpIndex, int mpIndex, int epIndex, int tIndex, double R)
+    Radius(size_t fpIndex, size_t mpIndex, size_t epIndex, size_t tIndex, double R)
     {
       frontpointIndex = fpIndex;
       midpointIndex = mpIndex;
       endpointIndex = epIndex;
       triangleIndex = tIndex;
       radius = R;
+    }
+    bool operator<(const Radius &b) {
+      return (radius < b.radius);
     }
   };
 
@@ -124,31 +129,30 @@ public:
 
 public:
   std::vector<Eigen::Vector2d> FindSch2D(double alpha);
-  void makeTriangles(const std::vector<Point> & points,
-                     std::list<Triangle> & triangles,
-                     std::vector<Radius> & heap,
+  void makeTriangles(std::list<Triangle> & triangles,
                      size_t previousMidpoint);
-  void updateTriangles(const std::vector<Point> & points, std::list<Triangle> & triangles, std::vector<Radius> & heap);
+  void updateTriangles(std::list<Triangle> & triangles);
   bool checkHull(const std::vector<Eigen::Vector2d> & points);
   void readPointsFromFile();
   
 
 private:
-  void swap(Radius & a, Radius & b);
-  std::list<Triangle> listTriangles(std::vector<Point> & points, std::vector<Radius> & heap);
-  void insertElementToHeap(std::vector<Radius> & heap, Radius & a);
+  std::list<Triangle> listTriangles(std::vector<Point> & points);
+  void insertElementToHeap(Radius & a);
   void removePointFromHull(std::vector<Point> & points, std::list<Triangle> & triangles, const Radius & heap);
-  void compareToChild(std::vector<Radius> & heap);
-  void removeHeap(std::vector<Radius> & heap);
-  bool checkIfMaxHeapIsInHull(std::vector<Radius> & heap, std::vector<Point> & points, std::list<Triangle> & triangles);
-  size_t findPreviousPoint(const std::vector<Point> & points, size_t pointIndex);
-  size_t findNextPoint(const std::vector<Point> & points, size_t pointIndex);
+  void removeHeap(std::priority_queue<Radius> & heap);
+  bool checkIfMaxHeapIsInHull(std::list<Triangle> & triangles);
+  size_t findPreviousPoint(size_t pointIndex);
+  size_t findNextPoint(size_t pointIndex);
   
 
   std::vector<Eigen::Vector2d> _points;
+  std::vector<Point> _pointsStructure;
   double _alpha;
   std::string _pointsPath;
+  std::priority_queue<Radius> _heap;
 };
 
 } // namespace SCH
+
 #endif

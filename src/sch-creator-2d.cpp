@@ -1,4 +1,18 @@
 #include <sch-creator/sch-creator-2d.h>
+// #include <pybind11/pybind11.h>
+// #include <pybind11/stl.h>
+
+
+// PYBIND11_MODULE(Sch2D, handle) {
+// 	py::class_<SchCreator2D>(
+// 		handle, "PySchCreator2D"
+// 	)
+
+// 	.def(py::init<std::string CONS&>());
+// 	.def("FindSch2D", [](SchCreator2D &self, double alpha) {
+// 		return py::return_value_policy::reference_internal
+// 	});
+// }
 
 namespace SCH
 {
@@ -10,19 +24,11 @@ namespace SCH
 
 	}
 
-	void SchCreator2D::swap(Radius &a, Radius &b) 
-	{
-		Radius temp = a;
-		a = b;
-		b = temp;
-	}
-
 	void SchCreator2D::readPointsFromFile()
 	{
 		std::string fileString;
 		std::ifstream file;
 		double x, y;
-		std::vector<Eigen::Vector2d> newPoints;
 
 		file.open(_pointsPath);
 		if(!file) {
@@ -35,42 +41,35 @@ namespace SCH
 			x = atof(fileString.substr(0, fileString.find(' ')).c_str());
 			y = atof(fileString.substr(fileString.find(' ') + 1, fileString.length()).c_str());
 			// add point to vector
-			newPoints.push_back(Eigen::Vector2d(x,y));
+			_points.push_back(Eigen::Vector2d(x,y));
+			// create vector of SCH::Point
+			_pointsStructure.push_back(SCH::SchCreator2D::Point(Eigen::Vector2d(x,y)));
 		}
 		
 		file.close();
-
-		_points = newPoints;
 	}
 
 	/* Heap insertion while maintaining heap */
-	void SchCreator2D::insertElementToHeap(std::vector<Radius> & heap, Radius & a) {
-		heap.push_back(a);
-		if(heap.size() > 1){
-			size_t childIndex = heap.size();
-			size_t parentIndex = (childIndex / 2);
-			
-			while(heap[parentIndex - 1].radius < a.radius){
-				swap(heap[parentIndex - 1], heap[childIndex - 1]);
-				if(parentIndex - 2 < 0) break;
-				childIndex = parentIndex;
-				parentIndex = int(childIndex / 2);
-			}
-		}
+	void SchCreator2D::insertElementToHeap(Radius & a) {
+		_heap.push(a);
 	}
 
 	/* Listing triangles and inserting their circumcircle radius to the heap */
-	std::list<SchCreator2D::Triangle> SchCreator2D::listTriangles(std::vector<Point> & points, std::vector<Radius> & heap) 
+	std::list<SchCreator2D::Triangle> SchCreator2D::listTriangles(std::vector<Point> & points) 
 	{
 		std::list<SchCreator2D::Triangle> triangles;
 		size_t n = points.size();
-		
+
+		std::vector<SchCreator2D::Radius> radii(n);
+
 		for (int i = 0; i < n; i++) {
 			Triangle t = Triangle(points[i % n].point, points[(i + 1) % n].point, points[(i + 2) % n].point);
 			Radius r = Radius(i % n, (i + 1) % n, (i + 2) % n, i, t.d);
 			triangles.push_back(t);
-			insertElementToHeap(heap, r);
+			radii[i] = r;
 		}
+
+		_heap = std::priority_queue<SchCreator2D::Radius>(radii.begin(), radii.end());
 
 		return triangles;
 	}
@@ -93,91 +92,69 @@ namespace SCH
 		points[heap.midpointIndex].removeFromHull();
 	}
 
-	/* Heap operation, comparing node to left and right child */
-	void SchCreator2D::compareToChild(std::vector<Radius> & heap) {
-		int parentIndex = 1;
-		int childIndex = 2 * parentIndex;
-		while(childIndex < heap.size() && heap[parentIndex - 1].radius < heap[childIndex - 1].radius || heap[parentIndex - 1].radius < heap[childIndex].radius){
-			if(heap[childIndex - 1].radius < heap[childIndex].radius) childIndex++;
-			while(heap[parentIndex - 1].radius < heap[childIndex - 1].radius){
-				swap(heap[parentIndex - 1], heap[childIndex - 1]);
-				parentIndex = childIndex;
-				childIndex = 2 * parentIndex;
-			}
-		}
-	}
-
 	/* Remove max heap while mantaining heap */
-	void SchCreator2D::removeHeap(std::vector<Radius> & heap){
-		swap(heap.front(), heap.back());
-		heap.pop_back();
-		int parentIndex = 1;
-		int childIndex = 2 * parentIndex;
-		while(childIndex + 1 < heap.size() && (heap[parentIndex - 1].radius < heap[childIndex - 1].radius || heap[parentIndex - 1].radius < heap[childIndex].radius)){
-			if(heap[childIndex - 1].radius < heap[childIndex].radius) childIndex++;
-			if(heap[parentIndex - 1].radius < heap[childIndex - 1].radius){
-				swap(heap[parentIndex - 1], heap[childIndex - 1]);
-				parentIndex = childIndex;
-				childIndex = 2 * parentIndex;
-			}
-		}
+	void SchCreator2D::removeHeap(std::priority_queue<Radius> & heap){
+		heap.pop();
 	}
 
 	/* Verifies all points corresponding to the max heap exist in the sch */
-	bool SchCreator2D::checkIfMaxHeapIsInHull(std::vector<Radius> & heap, std::vector<Point> & points, std::list<Triangle> & triangles){
+	bool SchCreator2D::checkIfMaxHeapIsInHull(std::list<Triangle> & triangles){
 		std::list<Triangle>::iterator it = triangles.begin();
-		advance(it, heap[0].triangleIndex);
-		bool trianglePointsExist = points[heap[0].frontpointIndex].inHull && (points[heap[0].midpointIndex].inHull && points[heap[0].endpointIndex].inHull);
+		advance(it, (_heap.top()).triangleIndex);
+		bool trianglePointsExist = _pointsStructure[(_heap.top()).frontpointIndex].inHull && (_pointsStructure[(_heap.top()).midpointIndex].inHull && _pointsStructure[(_heap.top()).endpointIndex].inHull);
 		return (*it).inHeap && trianglePointsExist;
 	}
 
 	/* Finds the closest previous point in the Hull*/
-	size_t SchCreator2D::findPreviousPoint(const std::vector<Point> & points, size_t pointIndex) {
-		while(!points[pointIndex % points.size()].inHull) {
+	size_t SchCreator2D::findPreviousPoint(size_t pointIndex) 
+	{
+		while(!_pointsStructure[pointIndex % _pointsStructure.size()].inHull) {
 			pointIndex--;
 		}
 		return pointIndex;
 	}
 
 	/* Finds the closest next point in the Hull */
-	size_t SchCreator2D::findNextPoint(const std::vector<Point> & points, size_t pointIndex) {
-		while(!points[pointIndex % points.size()].inHull) {
+	size_t SchCreator2D::findNextPoint(size_t pointIndex) 
+	{
+		while(!_pointsStructure[pointIndex % _pointsStructure.size()].inHull) {
 			pointIndex++;
 		}
 		return pointIndex;
 	}
 
 	/* Makes two new triangles based on the point that must be deleted from the sch */
-	void SchCreator2D::makeTriangles(const std::vector<Point> & points, std::list<Triangle> & triangles, std::vector<Radius> & heap, size_t previousMidpoint) {
-		size_t n = points.size();
+	void SchCreator2D::makeTriangles(std::list<Triangle> & triangles, size_t previousMidpoint) {
+		size_t n = _pointsStructure.size();
 
-		size_t newMidpoint = findPreviousPoint(points, n + previousMidpoint - 1);
+		size_t newMidpoint = findPreviousPoint(n + previousMidpoint - 1);
 
-		size_t newFrontpoint = findPreviousPoint(points, newMidpoint - 1);
+		size_t newFrontpoint = findPreviousPoint(newMidpoint - 1);
 
-		size_t newEndpoint = findNextPoint(points, n + previousMidpoint + 1); 
+		size_t newEndpoint = findNextPoint(n + previousMidpoint + 1); 
 
-		Triangle newTriangle1 = Triangle(points[newFrontpoint % n].point, points[newMidpoint % n].point, points[newEndpoint % n].point);
+		Triangle newTriangle1 = Triangle(_pointsStructure[newFrontpoint % n].point, _pointsStructure[newMidpoint % n].point, _pointsStructure[newEndpoint % n].point);
 		Radius newRadius1 = Radius(newFrontpoint % n, newMidpoint % n, newEndpoint % n, triangles.size(), newTriangle1.d);
 
 		newFrontpoint = newMidpoint;
 		newMidpoint = newEndpoint;
-		newEndpoint = findNextPoint(points, newMidpoint + 1);
+		newEndpoint = findNextPoint(newMidpoint + 1);
 
-		Triangle newTriangle2 = Triangle(points[newFrontpoint % n].point, points[newMidpoint % n].point, points[newEndpoint % n].point);
+		Triangle newTriangle2 = Triangle(_pointsStructure[newFrontpoint % n].point, _pointsStructure[newMidpoint % n].point, _pointsStructure[newEndpoint % n].point);
 		Radius newRadius2 = Radius(newFrontpoint % n, newMidpoint % n, newEndpoint % n, triangles.size() + 1, newTriangle2.d);
 
 		triangles.push_back(newTriangle1);
 		triangles.push_back(newTriangle2);
-		insertElementToHeap(heap, newRadius1);
-		insertElementToHeap(heap, newRadius2);
+		insertElementToHeap(newRadius1);
+		insertElementToHeap(newRadius2);
 	}
 
 	/* Stores the index of the max heap midpoint, removes it from the heap and gets the two new triangles*/
-	void SchCreator2D::updateTriangles(const std::vector<Point> & points, std::list<Triangle> & triangles, std::vector<Radius> & heap ){
-		int eliminatedPointIndex = heap.front().midpointIndex;
-		removeHeap(heap);
-		makeTriangles(points, triangles, heap, eliminatedPointIndex);
+	void SchCreator2D::updateTriangles(std::list<Triangle> & triangles)
+	{
+		size_t eliminatedPointIndex = (_heap.top()).midpointIndex;
+		removeHeap(_heap);
+		makeTriangles(triangles, eliminatedPointIndex);
 	}
 
 	
@@ -185,23 +162,22 @@ namespace SCH
 	std::vector<Eigen::Vector2d> SchCreator2D::FindSch2D(double alpha)
 	{
 		_alpha = alpha;
-		std::vector<Point> points;
-		for(auto i = _points.begin(); i != _points.end(); i++) points.push_back(Point((*i)));
 
-		if(points.size() < 3) {
+		std::vector<Eigen::Vector2d> strictlyConvexHull;
+		size_t pointsInSCH = _pointsStructure.size();
+
+		if(_pointsStructure.size() < 3) {
 			std::cout << "You need at least 3 points.\n" << std::endl;
 			return {};
 		} 
 
-		std::vector<Eigen::Vector2d> strictlyConvexHull;
-		size_t pointsInSCH = points.size();
-
-		std::vector<Radius> radiusHeap;
-		std::list<Triangle> triangles = listTriangles(points, radiusHeap);
 		
-		while(radiusHeap[0].radius > alpha && checkIfMaxHeapIsInHull(radiusHeap, points, triangles)) {
-			removePointFromHull(points, triangles, radiusHeap[0]);
-			updateTriangles(points, triangles, radiusHeap);
+
+		std::list<Triangle> triangles = listTriangles(_pointsStructure);
+		
+		while((_heap.top()).radius > alpha && checkIfMaxHeapIsInHull(triangles)) {
+			removePointFromHull(_pointsStructure, triangles, _heap.top());
+			updateTriangles(triangles);
 			pointsInSCH--;
 
 			if(pointsInSCH < 3) {
@@ -209,12 +185,12 @@ namespace SCH
 				return {};
 			}
 
-			while(!checkIfMaxHeapIsInHull(radiusHeap, points, triangles)) {
-				removeHeap(radiusHeap);
+			while(!checkIfMaxHeapIsInHull(triangles)) {
+				removeHeap(_heap);
 			}
 		}
 
-		for (auto i = points.begin(); i != points.end(); i++) {
+		for (auto i = _pointsStructure.begin(); i != _pointsStructure.end(); i++) {
 			if((*i).inHull){
 				strictlyConvexHull.push_back((*i).point);
 			}
@@ -251,12 +227,18 @@ namespace SCH
 }
 
 int main() {
+	SCH::SchCreator2D::Radius rad(2,3,4,6,2.5);
+	SCH::SchCreator2D::Radius radb(4,5,6,2,6.45);
+	std::cout << (rad < radb) << std::endl;
+	exit(0);
+
 	SCH::SchCreator2D sch("C:/Users/Home/Documents/UDLAP/2021/japon/convexhull/sch/points.txt");
 	std::vector<Eigen::Vector2d> schPoints = sch.FindSch2D(4.5);
 	std::cout << "Is hull strictly convex? " << sch.checkHull(schPoints) << std::endl;
 
 	std::cout << "\nPoints in strictly convex hull" << std::endl;
 	for(auto i = schPoints.begin(); i != schPoints.end(); i++) std::cout << *i << '\n' << std::endl;
+
 
 	return 0;
 }
