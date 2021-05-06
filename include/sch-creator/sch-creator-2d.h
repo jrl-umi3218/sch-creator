@@ -119,7 +119,10 @@ namespace SCH
         triangleIndex = tIndex;
         radius = R;
       }
-      bool operator<(const Radius &b) {
+
+      Radius() {}
+      
+      bool operator<(const Radius &b) const {
         return (radius < b.radius);
       }
     };

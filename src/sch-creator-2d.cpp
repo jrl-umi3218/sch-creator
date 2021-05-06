@@ -1,18 +1,5 @@
 #include <sch-creator/sch-creator-2d.h>
-// #include <pybind11/pybind11.h>
-// #include <pybind11/stl.h>
 
-
-// PYBIND11_MODULE(Sch2D, handle) {
-// 	py::class_<SchCreator2D>(
-// 		handle, "PySchCreator2D"
-// 	)
-
-// 	.def(py::init<std::string CONS&>());
-// 	.def("FindSch2D", [](SchCreator2D &self, double alpha) {
-// 		return py::return_value_policy::reference_internal
-// 	});
-// }
 
 namespace SCH
 {
@@ -238,11 +225,6 @@ namespace SCH
 }
 
 int main() {
-	SCH::SchCreator2D::Radius rad(2,3,4,6,2.5);
-	SCH::SchCreator2D::Radius radb(4,5,6,2,6.45);
-	std::cout << (rad < radb) << std::endl;
-	exit(0);
-
 	SCH::SchCreator2D sch("C:/Users/Home/Documents/UDLAP/2021/japon/convexhull/sch/points.txt");
 	std::vector<Eigen::Vector2d> schPoints = sch.FindSch2D(4.5);
 	std::cout << "Is hull strictly convex? " << sch.checkHull(schPoints) << std::endl;
