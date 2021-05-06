@@ -1,6 +1,5 @@
 #include <sch-creator/sch-creator-2d.h>
 
-
 namespace SCH
 {
 	/* Strictly Convex Hull */
@@ -8,7 +7,6 @@ namespace SCH
 	{
 		_pointsPath = points;
 		readPointsFromFile();
-
 	}
 
 	void SchCreator2D::readPointsFromFile()
@@ -150,12 +148,13 @@ namespace SCH
 		// get the index of the point to eliminate
 		size_t eliminatedPointIndex = (_heap.top()).midpointIndex;
 		// remove max heap
+		_eliminatedVertex.push_back(_heap.top());
 		_heap.pop();
 		// make the mew triangles
 		makeTriangles(eliminatedPointIndex);
 	}
 
-	std::vector<Eigen::Vector2d> SchCreator2D::FindSch2D(double alpha)
+	void SchCreator2D::FindSch2D(double alpha)
 	{
 		_alpha = alpha;
 
@@ -164,12 +163,12 @@ namespace SCH
 
 		if(pointsInSCH < 3) {
 			std::cout << "You need at least 3 points.\n" << std::endl;
-			return {};
+			exit(0);
 		} 
 
 		// make list of all initial triangles
 		listTriangles();
-		
+
 		// while the max Heap is larger than alpha and the max Heap points are still in the Hull
 		while((_heap.top()).radius > alpha && checkIfMaxHeapIsInHull()) {
 			// Remove middle point and make the new triangles
@@ -179,7 +178,7 @@ namespace SCH
 
 			if(pointsInSCH < 3) {
 				std::cout << "\nAlpha is too small.\n" << std::endl;
-				return {};
+				exit(0);
 			}
 
 			while(!checkIfMaxHeapIsInHull()) {
@@ -192,8 +191,10 @@ namespace SCH
 				strictlyConvexHull.push_back((*i).point);
 			}
 		}
+		
+		_eliminatedPoints = _points.size() - pointsInSCH;
 
-		return strictlyConvexHull;
+		makeYAML(strictlyConvexHull);
 	}
 
 	bool SchCreator2D::checkHull(const std::vector<Eigen::Vector2d> &points) 
@@ -222,16 +223,67 @@ namespace SCH
 
 		return true;
 	}
+	YAML::Emitter& operator << (YAML::Emitter& out, const Eigen::Vector2d& v) {
+		out << YAML::Flow;
+		out << YAML::BeginSeq << v[0] << v[1] << YAML::EndSeq;
+		return out;
+	}
+
+	YAML::Emitter& operator << (YAML::Emitter& out, const SCH::SchCreator2D::Radius& r) {
+		out << YAML::Flow;
+		out << YAML::BeginSeq << r.radius << r.midpointIndex << YAML::EndSeq;
+		return out;
+	}
+
+	void SchCreator2D::makeYAML(const std::vector<Eigen::Vector2d> &schPoints) {
+		YAML::Emitter out; // make YAML Emmitter
+		out << YAML::Comment("Output file containing the information about the computed strictly convex hull.");
+
+		out << YAML::BeginMap; 
+		//Begin sequence for original ch points
+		out << YAML::Key << "convexHull_points";
+		out << YAML::Value << YAML::BeginSeq;
+		for(size_t i = 0; i <  _points.size(); i++) {
+			out << _points[i];
+		}
+		out << YAML::EndSeq;
+
+		//Number of eliminated points
+		out << YAML::Key << "eliminated_points";
+		out << YAML::Value << _eliminatedPoints;
+		
+		//Begin sequence for removed ch points
+		out << YAML::Key << "removed_points_radius_and_index";
+		out << YAML::Value << YAML::BeginSeq;
+		out << YAML::Comment("[Radius, index]");
+		for(size_t i = 0; i <  _eliminatedVertex.size(); i++) {
+			out << _eliminatedVertex[i];
+		}
+		out << YAML::EndSeq;
+
+		//Begin sequence for sch points
+		out << YAML::Key << "strictlyConvexHull_points";
+		out << YAML::Value << YAML::BeginSeq;
+		for(size_t i = 0; i <  schPoints.size(); i++) {
+			out << schPoints[i];
+		}
+		out << YAML::EndSeq;
+
+		out << YAML::EndMap;
+
+		std::ofstream fout;
+		fout.open("output.yaml");
+		fout << out.c_str();
+		fout.close();
+	}
+
 }
+
 
 int main() {
 	SCH::SchCreator2D sch("C:/Users/Home/Documents/UDLAP/2021/japon/convexhull/sch/points.txt");
-	std::vector<Eigen::Vector2d> schPoints = sch.FindSch2D(4.5);
-	std::cout << "Is hull strictly convex? " << sch.checkHull(schPoints) << std::endl;
-
-	std::cout << "\nPoints in strictly convex hull" << std::endl;
-	for(auto i = schPoints.begin(); i != schPoints.end(); i++) std::cout << *i << '\n' << std::endl;
-
+	sch.FindSch2D(4.5);
+	//std::cout << "Is hull strictly convex? " << sch.checkHull(schPoints) << std::endl;
 
 	return 0;
 }

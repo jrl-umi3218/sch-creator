@@ -18,6 +18,7 @@
 #include <vector>
 #include <functional>
 #include <queue>
+#include "yaml-cpp/yaml.h"
 
 /*! \namespace SCH
  *  \brief Strictly Convex Hull Namespace
@@ -131,11 +132,12 @@ namespace SCH
     SchCreator2D(const std::string &points);
 
   public:
-    std::vector<Eigen::Vector2d> FindSch2D(double alpha);
+    void FindSch2D(double alpha);
     void makeTriangles(size_t previousMidpoint);
     void updateTriangles(std::list<Triangle> & triangles);
     bool checkHull(const std::vector<Eigen::Vector2d> & points);
     void readPointsFromFile();
+    void makeYAML(const std::vector<Eigen::Vector2d> &schPoints);
     
 
   private:
@@ -144,13 +146,15 @@ namespace SCH
     bool checkIfMaxHeapIsInHull();
     size_t findPreviousPoint(size_t pointIndex);
     size_t findNextPoint(size_t pointIndex);
-    
-
+  
+  public:
     std::vector<Eigen::Vector2d> _points;
     std::vector<Point> _pointsStructure;
+    size_t _eliminatedPoints;
     double _alpha;
     std::string _pointsPath;
     std::priority_queue<Radius> _heap;
+    std::vector<Radius> _eliminatedVertex;
     std::list<SchCreator2D::Triangle> _triangles;
   }; //class SchCreator2D
 
