@@ -223,15 +223,20 @@ namespace SCH
 
 		return true;
 	}
+
+	// Overwriting the << operation for Eigen's Vector2d and the YAML emitter
 	YAML::Emitter& operator << (YAML::Emitter& out, const Eigen::Vector2d& v) {
 		out << YAML::Flow;
 		out << YAML::BeginSeq << v[0] << v[1] << YAML::EndSeq;
+		// Vector2d's elements added to a YAML flow
 		return out;
 	}
 
+	// Overwriting the << operation for SCH's Radius and the YAML emitter
 	YAML::Emitter& operator << (YAML::Emitter& out, const SCH::SchCreator2D::Radius& r) {
 		out << YAML::Flow;
 		out << YAML::BeginSeq << r.radius << r.midpointIndex << YAML::EndSeq;
+		// Radius' radius value and eliminated point index added to a YAML flow
 		return out;
 	}
 
