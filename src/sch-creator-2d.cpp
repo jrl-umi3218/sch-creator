@@ -252,6 +252,10 @@ namespace SCH
 			out << _points[i];
 		}
 		out << YAML::EndSeq;
+		
+		//Alpha value
+		out << YAML::Key << "alpha";
+		out << YAML::Value << _alpha;
 
 		//Number of eliminated points
 		out << YAML::Key << "eliminated_points";
@@ -287,7 +291,7 @@ namespace SCH
 
 int main() {
 	SCH::SchCreator2D sch("C:/Users/Home/Documents/UDLAP/2021/japon/convexhull/sch/points.txt");
-	sch.FindSch2D(4.5);
+	sch.FindSch2D(10.5);
 	//std::cout << "Is hull strictly convex? " << sch.checkHull(schPoints) << std::endl;
 
 	return 0;

@@ -44,7 +44,7 @@ def findArc(p1,p2, alpha):
     return C, arcStartAngle, arcStartAngle + angleInbetween
 
 ########## end of functions ##########
-
+# read YAML file
 file = open("build\src\Debug\output.yaml")
 parsed_yaml = yaml.load(file, Loader=yaml.FullLoader)
 
@@ -55,29 +55,32 @@ chPoints = np.array(parsed_yaml.get("convexHull_points"))
 removedPointsRadiusAndIndex = parsed_yaml.get("removed_points_radius_and_index")
 removedPointsRadius = flip(np.array([i[0] for i in removedPointsRadiusAndIndex]))
 removedPointsIndex = [i[1] for i in removedPointsRadiusAndIndex]
-rIndex = removedPointsIndex[::-1]
+rIndex = np.array(removedPointsIndex[::-1])
 eliminatedPoints = np.array([chPoints[i] for i in removedPointsIndex])
-print(eliminatedPoints)
 NEliminatedPoints = parsed_yaml.get("eliminated_points")
+
+# get alpha
+alpha = parsed_yaml.get("alpha")
 
 # create the figure
 fig, ax = plt.subplots()
-points_plot = plt.scatter(chPoints[:,0],chPoints[:,1])
 
 
 # draw circles
 n = len(chPoints)
-initial_alpha = 4.5
-# get plot limits
-xmin, xmax = ax.get_xlim()
-ymin, ymax = ax.get_ylim()
+initial_alpha = alpha
 
 # check for removed points
 newCHPoints = chPoints
 if initial_alpha < removedPointsRadius[0]:
-    plt.scatter(eliminatedPoints[:,0],eliminatedPoints[:,1], color='hotpink')
     newCHPoints = np.delete(chPoints,rIndex,axis=0)
 n = len(newCHPoints)
+
+points_plot = plt.scatter(chPoints[:,0],chPoints[:,1])
+plt.scatter(eliminatedPoints[:,0],eliminatedPoints[:,1], color='hotpink')
+# get plot limits
+xmin, xmax = ax.get_xlim()
+ymin, ymax = ax.get_ylim()
 
 for i in range(n):
     p1 = newCHPoints[i % n]
@@ -98,9 +101,9 @@ plt.subplots_adjust(bottom = 0.25)
 sliderAxes = plt.axes([0.15, 0.05, 0.7, 0.1], facecolor = 'ghostwhite')
 Nslider = Slider(
     ax = sliderAxes,
-    label = 'Alpha',
-    valmin = 2.0,
-    valmax = 12.0,
+    label = 'Alpha value',
+    valmin = initial_alpha * 0.75,
+    valmax = removedPointsRadius[len(removedPointsRadius)-1]*1.25,
     valinit = initial_alpha
 )
 
@@ -108,33 +111,38 @@ Nslider = Slider(
 plt.sca(ax)
 
 index = 0
-indexInRange = True
+reverse = False
 
 def update(N):
     plt.cla()
     global newCHPoints
     global n, NEliminatedPoints
-    global index, indexInRange
+    global index, rIndex
+    global reverse
     
-    # check if point Radius is larger than current alpha
-    if (N > removedPointsRadius[index]) and indexInRange:
-        # insert the points to the array
-        newCHPoints = np.insert(newCHPoints,rIndex[index], chPoints[rIndex[index]], axis=0)
-        print(chPoints[rIndex[index]])
+    # check if eliminated point Radius is larger than current alpha
+    if (N >= removedPointsRadius[index]) and NEliminatedPoints > 0:
+        # insert the points to the hull, delete points after current index
+        newCHPoints = np.delete(chPoints,rIndex[index+1:],axis=0)
         n = len(newCHPoints)
-        if(index == len(rIndex)-1):
-            indexInRange = False
+        if index == len(rIndex)-1:
+            index = len(rIndex) - 1
+            NEliminatedPoints = 0
         else:
             index = index + 1
             NEliminatedPoints = NEliminatedPoints - 1
-    # elif N < removedPointsRadius[index] and NEliminatedPoints < 4:
-    #     newCHPoints =  np.delete(chPoints,rIndex[index], axis=0)
-    #     n = len(newCHPoints)
-    #     indexInRange = True
-    #     if(index > 0):
-    #         index = index - 1
-    #     else:
-    #         index = 0
+    # check if alpha is larger than the previous eliminated point but smaller than the current one
+    elif (NEliminatedPoints < len(eliminatedPoints)) and (N < removedPointsRadius[index - 1]) and (N <= removedPointsRadius[index]):
+        # remove points from the hull, current index forward
+        newCHPoints = np.delete(chPoints,rIndex[index-1:],axis=0)
+        n = len(newCHPoints)
+        # modify index
+        if index > 0:
+            index = index - 1 
+            NEliminatedPoints = NEliminatedPoints + 1
+        else:
+            index = 0
+            NEliminatedPoints = len(eliminatedPoints)
 
     for i in range(n):
         p1 = newCHPoints[i % n]
@@ -144,9 +152,11 @@ def update(N):
         height = 2 * N
         arc = mpatches.Arc(C, width, height, 0, theta1, theta2)
         ax.add_patch(arc)
+
+    # plot points
     plt.scatter(eliminatedPoints[:,0],eliminatedPoints[:,1], color='hotpink')
     plt.scatter(newCHPoints[:,0],newCHPoints[:,1])
-    print(newCHPoints)
+
     # set plot limits
     plt.xlim(xmin-0.5,xmax)
     plt.ylim(ymin,ymax)
