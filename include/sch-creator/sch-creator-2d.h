@@ -91,6 +91,7 @@ namespace SCH
         double B = (b - c).norm();
         double C = (a - c).norm();
         double s = (A + B + C) / 2;
+
         return (A * B * C) / (4 * sqrt(s * (s - A) * (s - B) * (s - C)));
       }
 
@@ -103,18 +104,18 @@ namespace SCH
     /*! \class Radius
     *	\brief %Class Radius
     *
-    * A radius structure containing the indexes of the triangle's vertices,
+    * A structure containing the indexes of the triangle's vertices,
     * the index of the triangle itself and the circumcircle radius.
     */
 
     struct Radius
     {
-      size_t frontpointIndex, midpointIndex, endpointIndex, triangleIndex;
+      size_t startpointIndex, midpointIndex, endpointIndex, triangleIndex;
       double radius;
 
       Radius(size_t fpIndex, size_t mpIndex, size_t epIndex, size_t tIndex, double R)
       {
-        frontpointIndex = fpIndex;
+        startpointIndex = fpIndex;
         midpointIndex = mpIndex;
         endpointIndex = epIndex;
         triangleIndex = tIndex;
@@ -135,9 +136,9 @@ namespace SCH
     void FindSch2D(double alpha);
     void makeTriangles(size_t previousMidpoint);
     void updateTriangles(std::list<Triangle> & triangles);
-    bool checkHull(const std::vector<Eigen::Vector2d> & points);
+    bool checkHull();
     void readPointsFromFile();
-    void makeYAML(const std::vector<Eigen::Vector2d> &schPoints);
+    void makeYAML();
     
 
   private:
@@ -149,6 +150,7 @@ namespace SCH
   
   public:
     std::vector<Eigen::Vector2d> _points;
+    std::vector<Eigen::Vector2d> _schPoints;
     std::vector<Point> _pointsStructure;
     size_t _eliminatedPoints;
     double _alpha;
