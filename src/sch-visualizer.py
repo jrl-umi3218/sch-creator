@@ -131,25 +131,19 @@ def update(N):
     # clear the axes
     plt.cla()
 
-    # find direction of the slider
-    # if true, the slider is moved from right to left,
-    # else, the slider is moved form left to right
-    newAlpha = N
-    if newAlpha < currentAlpha:
-        reverse = True
-    else:
-        reverse = False
 
-    # update current alpha
-    currentAlpha = newAlpha
+    while True:
+        # initialize variable to leave the loop
+        changeInPoints = False
 
-    if reverse:
         # remove previous point from hull
         # check if alfa is smaller than the previous and current point
-        if index > 0 and N < removedPointsRadius[index] and N < removedPointsRadius[index-1]:
+        if index > 0 and noRemovedPoints > 0 and N < removedPointsRadius[index] and N < removedPointsRadius[index-1]:
             # delete all points from index-1 onwards
             newSCHPoints = np.delete(chPoints,rIndex[index-1:],axis=0)
-          
+            
+            # change state of the variable to stay in the loop
+            changeInPoints = True
             # update index and increase number of eliminated points
             index -= 1
             noRemovedPoints += 1
@@ -157,15 +151,20 @@ def update(N):
         elif noRemovedPoints == 0 and N < removedPointsRadius[index]:
             # remove last point from hull
             newSCHPoints = np.delete(chPoints,rIndex[len(rIndex)-1], axis=0)
-          
+
+            # change state of the variable to stay in the loop
+            changeInPoints = True
+            
             # set the amount of eliminated points to 1
             noRemovedPoints = 1
-    else:
         # add points to the hull
         if N >= removedPointsRadius[index] and noRemovedPoints > 0:
             # remove all points from index+1 onwards
             newSCHPoints = np.delete(chPoints,rIndex[index+1:],axis=0)
-          
+
+            # change state of the variable to stay in the loop
+            changeInPoints = True
+            
             # check if index is in range
             if index < len(removedPoints) - 1:
                 # if in range, increment index and decrease no. of points to add
@@ -175,7 +174,11 @@ def update(N):
                 # else, limit to max value and set amount of points to add to 0
                 index = len(removedPoints) - 1
                 noRemovedPoints = 0
-    
+        
+        # leave loop only if there aren't changes in the state of the points
+        if not changeInPoints:
+            break
+        
     # find new number of points in hull
     n = len(newSCHPoints)
 
