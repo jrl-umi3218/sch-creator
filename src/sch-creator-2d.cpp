@@ -178,18 +178,18 @@ namespace SCH
 	void SchCreator2D::findNewAlpha()
 	{
 		_initialAlpha = _alpha;
-		double topAlpha = _alpha + 0.1;
-		_alpha += (topAlpha - _alpha) / 2;
+		double topAlpha = (_heap.top()).radius + 0.05, d;
 		std::cout << "Alpha: " << _alpha << std::endl;
 		std::cout << "Heap Top: " << (_heap.top()).radius << std::endl;
+		std::cout << "ToP Alpha: " << topAlpha << std::endl;
 
 		while(true)
 		{
 			if((_heap.top()).radius < _alpha) break;
 			else
 			{
-				topAlpha += 0.1;
-				_alpha += (topAlpha - _alpha) / 2;
+				d = (topAlpha - _alpha) /2;
+				_alpha += d;
 				std::cout << "Alpha: " << _alpha << std::endl;
 			}
 			
