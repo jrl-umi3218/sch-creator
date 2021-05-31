@@ -175,6 +175,27 @@ namespace SCH
 		makeTriangles(eliminatedPointIndex);
 	}
 
+	void SchCreator2D::findNewAlpha()
+	{
+		_initialAlpha = _alpha;
+		double topAlpha = _alpha + 0.1;
+		_alpha += (topAlpha - _alpha) / 2;
+		std::cout << "Alpha: " << _alpha << std::endl;
+		std::cout << "Heap Top: " << (_heap.top()).radius << std::endl;
+
+		while(true)
+		{
+			if((_heap.top()).radius < _alpha) break;
+			else
+			{
+				topAlpha += 0.1;
+				_alpha += (topAlpha - _alpha) / 2;
+				std::cout << "Alpha: " << _alpha << std::endl;
+			}
+			
+		}		
+	}
+
 	/*	processes the points and obtains the ones belonging to the sch,
 		generates the required data for the output file and generates it */
 	void SchCreator2D::FindSch2D(double alpha)
@@ -194,7 +215,7 @@ namespace SCH
 		listTriangles();
 
 		// while the max Heap radius is larger than alpha
-		while((_heap.top()).radius > alpha) {
+		while((_heap.top()).radius > _alpha) {
 			// Remove middle point and make the new triangles
 			removePointFromHull(_heap.top());
 			updateTriangles(_triangles);
@@ -203,7 +224,8 @@ namespace SCH
 			// ensure that, after elimination, there's still at least 3 points
 			if(pointsInSCH < 3) {
 				std::cout << "\nAlpha is too small.\n" << std::endl;
-				exit(1);
+				findNewAlpha();
+				// exit(1);
 			}
 
 			// verify that all points in the new max heap belong to the hull,
@@ -338,10 +360,15 @@ namespace SCH
 
 }
 
+// Run:
+// "C:\Users\Home\Documents\UDLAP\2021\japon\balooninflating\sch-creator\build\src\Debug\sch-creator-2d.exe" "C:/Users/Home/Documents/UDLAP/2021/japon/convexhull/sch/points.txt" 9
 
-int main() {
-	SCH::SchCreator2D sch("C:/Users/Home/Documents/UDLAP/2021/japon/convexhull/sch/points.txt");
-	sch.FindSch2D(10.5);
+int main(int argc, char** argv) {
+	std::cout << "Points file is in the following location:" << std::endl;
+	std::cout << argv[1] << std:: endl;
+	std::cout << "Alpha inserted: " << argv[2] << std::endl;
+	SCH::SchCreator2D sch(argv[1]);
+	sch.FindSch2D(std::stod(argv[2]));
 	std::cout << "Is hull strictly convex? " << sch.checkHull() << std::endl;
 
 	return 0;
