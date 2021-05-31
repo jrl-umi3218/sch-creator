@@ -139,7 +139,7 @@ namespace SCH
     bool checkHull();
     void readPointsFromFile();
     void makeYAML();
-    
+    void findNewAlpha();
 
   private:
     void listTriangles();
@@ -154,6 +154,7 @@ namespace SCH
     std::vector<Point> _pointsStructure;
     size_t _eliminatedPoints;
     double _alpha;
+    double _initialAlpha;
     std::string _pointsPath;
     std::priority_queue<Radius> _heap;
     std::vector<Radius> _eliminatedVertex;
