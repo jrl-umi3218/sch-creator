@@ -47,7 +47,8 @@ def findArc(p1,p2, alpha):
 
 ########## end of functions ##########
 # read YAML file
-file = open("build\src\Debug\output.yaml")
+#file = open("build\src\Debug\output.yaml")
+file = open("build\src\Release\output.yaml")
 parsed_yaml = yaml.load(file, Loader=yaml.FullLoader)
 
 # Create numpy array of convex hull points
@@ -109,7 +110,7 @@ sliderAxes = plt.axes([0.2, 0.05, 0.6, 0.1], facecolor = 'ghostwhite')
 Nslider = Slider(
     ax = sliderAxes,
     label = 'Alpha value',
-    valmin = math.ceil(initial_alpha * 0.75),
+    valmin = math.ceil(initial_alpha - 1),
     valmax = math.floor(removedPointsRadius[len(removedPointsRadius)-1]*1.25),
     valinit = initial_alpha
 )
@@ -204,6 +205,7 @@ def update(N):
     plt.xlim(xmin-1,xmax+1)
     plt.ylim(ymin-1,ymax+1)
 
+update(initial_alpha)
 # Register the update function with each slider
 Nslider.on_changed(update)
 plt.show()
