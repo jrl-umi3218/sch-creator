@@ -1,6 +1,6 @@
 #include <sch-creator/sch-creator-2d.h>
 
-namespace SCH
+namespace sch
 {
 	/* Strictly Convex Hull */
 	SchCreator2D::SchCreator2D(const std::string &points)
@@ -33,8 +33,8 @@ namespace SCH
 			y = atof(fileString.substr(fileString.find(' ') + 1, fileString.length()).c_str());
 			// add Vector2d to vector
 			_points.push_back(Eigen::Vector2d(x,y));
-			// add SCH::Point to vector
-			_pointsStructure.push_back(SCH::SchCreator2D::Point(Eigen::Vector2d(x,y)));
+			// add sch::Point to vector
+			_pointsStructure.push_back(sch::SchCreator2D::Point(Eigen::Vector2d(x,y)));
 		}
 
 		//std::cout << "***** Initial points *****" << std::endl;
@@ -507,8 +507,8 @@ namespace SCH
 		return out;
 	}
 
-	// Overwriting the << operation for SCH's Radius and the YAML emitter
-	YAML::Emitter& operator << (YAML::Emitter& out, const SCH::SchCreator2D::Radius& r) {
+	// Overwriting the << operation for sch's Radius and the YAML emitter
+	YAML::Emitter& operator << (YAML::Emitter& out, const sch::SchCreator2D::Radius& r) {
 		out << YAML::Flow;
 		out << YAML::BeginSeq << r.radius << r.midpointIndex << YAML::EndSeq;
 		// Radius' radius value and eliminated point index added to a YAML flow
@@ -570,7 +570,7 @@ int main(int argc, char** argv) {
 	std::cout << "Points file is in the following location:" << std::endl;
 	std::cout << argv[1] << std:: endl;
 	std::cout << "Alpha inserted: " << argv[2] << std::endl;
-	SCH::SchCreator2D sch(argv[1]);
+	sch::SchCreator2D sch(argv[1]);
 	sch.FindSch2D(std::stod(argv[2]));
 	std::cout << "Is hull strictly convex? " << sch.checkHull() << std::endl;
 	// sch::S_Sphere s(1);

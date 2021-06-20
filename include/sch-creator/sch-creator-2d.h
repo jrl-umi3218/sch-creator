@@ -19,12 +19,13 @@
 #include <functional>
 #include <queue>
 #include "yaml-cpp/yaml.h"
+// #include <sch/S_Object/S_Sphere.h>
 
-/*! \namespace SCH
+/*! \namespace sch
  *  \brief Strictly Convex Hull Namespace
  */
 
-namespace SCH
+namespace sch
 {
 
   /*! \class SchCreator2D
@@ -74,7 +75,7 @@ namespace SCH
     struct Triangle
     {
       Eigen::Vector2d a, b, c;
-      double d; // circumcircle diameter
+      double r; // circumcircle diameter
       bool inHeap = true;
 
       Triangle(const Eigen::Vector2d & A, const Eigen::Vector2d & B, const Eigen::Vector2d & C)
@@ -82,7 +83,7 @@ namespace SCH
         a = A;
         b = B;
         c = C;
-        d = findCircumcircleRadius();
+        r = findCircumcircleRadius();
       }
 
       double findCircumcircleRadius()
@@ -110,15 +111,21 @@ namespace SCH
 
     struct Radius
     {
-      size_t startpointIndex, midpointIndex, endpointIndex, triangleIndex;
+      size_t startpointIndex, midpointIndex, 
+             endpointIndex, prevTriangleIndex,
+             triangleIndex, nextTriangleIndex;
       double radius;
 
-      Radius(size_t fpIndex, size_t mpIndex, size_t epIndex, size_t tIndex, double R)
+      Radius(size_t spIndex, size_t mpIndex, 
+             size_t epIndex, size_t prevtIndex, 
+             size_t tIndex, size_t nexttIndex, double R)
       {
-        startpointIndex = fpIndex;
+        startpointIndex = spIndex;
         midpointIndex = mpIndex;
         endpointIndex = epIndex;
+        prevTriangleIndex = prevtIndex;
         triangleIndex = tIndex;
+        nextTriangleIndex = nexttIndex;
         radius = R;
       }
 
@@ -134,19 +141,24 @@ namespace SCH
 
   public:
     void FindSch2D(double alpha);
-    void makeTriangles(size_t previousMidpoint);
-    void updateTriangles(std::list<Triangle> & triangles);
     bool checkHull();
-    void readPointsFromFile();
-    void makeYAML();
-    void findNewAlpha();
+    void printTriangles();
+    void printPoints();
 
   private:
     void listTriangles();
+    void makeTriangles(size_t previousMidpoint);
+    void updateTriangles(std::list<Triangle> & triangles);
     void removePointFromHull(const Radius & heap);
     bool checkIfMaxHeapIsInHull();
     size_t findPreviousPoint(size_t pointIndex);
     size_t findNextPoint(size_t pointIndex);
+    size_t findPreviousTriangle(size_t triangleIndex);
+    size_t findNextTriangle(size_t triangleIndex);
+    void findNewAlpha();
+    void readPointsFromFile();
+    void makeYAML();
+    void findClosestPoint();
   
   public:
     std::vector<Eigen::Vector2d> _points;
@@ -161,6 +173,6 @@ namespace SCH
     std::list<SchCreator2D::Triangle> _triangles;
   }; //class SchCreator2D
 
-} // namespace SCH
+} // namespace sch
 
 #endif
