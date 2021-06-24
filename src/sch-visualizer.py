@@ -48,7 +48,8 @@ def findArc(p1,p2, alpha):
 ########## end of functions ##########
 # read YAML file
 #file = open("build\src\Debug\output.yaml")
-file = open("build\src\Release\output.yaml")
+# file = open("build\src\Release\output.yaml")
+file = open("/home/amrf/balloon-inflating/sch-creator/output.yaml")
 parsed_yaml = yaml.load(file, Loader=yaml.FullLoader)
 
 # Create numpy array of convex hull points

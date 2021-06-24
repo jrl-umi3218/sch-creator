@@ -566,6 +566,7 @@ namespace sch
 // Run:
 // "C:\Users\Home\Documents\UDLAP\2021\japon\balooninflating\sch-creator\build\src\Debug\sch-creator-2d.exe" "C:/Users/Home/Documents/UDLAP/2021/japon/convexhull/sch/points.txt" 9
 // "C:\Users\Home\Documents\UDLAP\2021\japon\balooninflating\sch-creator\build\src\Release\sch-creator-2d.exe" "C:/Users/Home/Documents/UDLAP/2021/japon/convexhull/sch/points.txt" 7
+// "/home/amrf/balloon-inflating/sch-creator/build/src/sch-creator-2d" "/home/amrf/Documents/points.txt" 7
 int main(int argc, char** argv) {
 	std::cout << "Points file is in the following location:" << std::endl;
 	std::cout << argv[1] << std:: endl;
