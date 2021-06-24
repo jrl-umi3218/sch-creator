@@ -18,7 +18,7 @@
 #include <vector>
 #include <functional>
 #include <queue>
-#include "yaml-cpp/yaml.h"
+#include <yaml-cpp/yaml.h>
 // #include <sch/S_Object/S_Sphere.h>
 
 /*! \namespace sch
@@ -30,14 +30,13 @@ namespace sch
 
   /*! \class SchCreator2D
   *	\brief %Class SchCreator2D
-  *	\author Escande Adrien
-  *   \author Cochet-Grasset Amelie
+  *	\author Ruiz Ana
   *	\version 0.0.0
-  *	\date 07.10.23
+  *	\date 21.04.07
   *	\bug None
   *	\warning None
   *
-  * This class read a 3d points cloud and compute its smooth convex hull made of spheres and tori
+  * This class read a 2d points cloud and compute its strictly convex hull made of arcs 
   */
 
   class SchCreator2D
