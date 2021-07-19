@@ -71,4 +71,5 @@ file(
 
 add_subdirectory(src)
 
+ADD_SUBDIRECTORY(third-party/yaml-cpp)
 ADD_SUBDIRECTORY(script)

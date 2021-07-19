@@ -857,6 +857,8 @@ postponed:
         ttmp._center = (_points[(*it)._point3] + _points[(*it)._point1]) / 2;
         l = (_points[(*it)._point3] - _points[(*it)._point1]).norm();
         ttmp._normal = (_points[(*it)._point3] - _points[(*it)._point1]) / l;
+
+        // Radius of the arc of the centers 
         ttmp._extRadius = (ttmp._center - stmp._center).norm();
         torus.push_back(std::pair<int, VVRtorus>(tind, ttmp));
         tinds.insert(std::pair<int, int>(tind, torus.size() - 1));

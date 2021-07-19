@@ -71,7 +71,7 @@ namespace sch
 			std::cout << "Start Point:" << (*it).a[0] << ' ' << (*it).a[1] << std::endl;
 			std::cout << "Midpoint Point:" << (*it).b[0] << ' ' << (*it).b[1] << std::endl;
 			std::cout << "Endpoint Point:" << (*it).c[0] << ' ' << (*it).c[1] << std::endl;
-			std:: cout << "Circumcircle rcdius: " << (*it).r << '\n' << std::endl;
+			std:: cout << "Circumcircle radius: " << (*it).r << '\n' << std::endl;
 			n++;
 		}
 	}
@@ -85,7 +85,7 @@ namespace sch
 		// declare the unnordered vector of Radius
 		std::vector<SchCreator2D::Radius> radii(n); 
 
-		for (int i = 0; i < n; i++) {
+		for (size_t i = 0; i < n; i++) {
 			// make triangle and corresponding Radius
 			Triangle t = Triangle(_pointsStructure[i % n].point, 
 						_pointsStructure[(i + 1) % n].point, 
@@ -574,8 +574,6 @@ int main(int argc, char** argv) {
 	sch::SchCreator2D sch(argv[1]);
 	sch.FindSch2D(std::stod(argv[2]));
 	std::cout << "Is hull strictly convex? " << sch.checkHull() << std::endl;
-	// sch::S_Sphere s(1);
-	// s.getOrientation();
 
 	return 0;
 }
