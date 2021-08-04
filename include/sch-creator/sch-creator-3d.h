@@ -9,13 +9,15 @@
 #define SCH_CREATOR_3D_H
 
 #include <Eigen/Dense>
-// #include <fstream>
+#include <fstream>
 #include <iostream>
 // #include <math.h>
 // #include <memory>
-// #include <string>
+#include <string>
 #include <vector>
-// #include <sch/S_Polyhedron/Polyhedron_algorithms.h>
+#include <map>
+#include <sch/S_Polyhedron/Polyhedron_algorithms.h>
+#include <boost/program_options.hpp>
 
 
 /*! \namespace sch
@@ -39,6 +41,20 @@ namespace sch
   class SchCreator3D
   {
   public:
+    struct Plane
+    {
+        Eigen::MatrixXd base;
+        Eigen::Vector3d normal;
+
+        Plane(const Eigen::MatrixXd &b, const Eigen::Vector3d &n)
+        {
+            base = b;
+            normal = n;
+        }
+
+        Plane() {}
+    };
+
     struct Sphere
     {
         Eigen::Vector3d center;
@@ -56,7 +72,23 @@ namespace sch
         
     };
 
-    
+    struct BigSphere
+    {
+      Sphere s;
+      size_t p1,p2,p3;
+
+      BigSphere(const Sphere &sphere,
+                size_t a, size_t b, size_t c)
+      {
+        s = sphere;
+        p1 = a;
+        p2 = b;
+        p3 = c;
+      }
+      
+      BigSphere() {}
+
+    };
 
     struct SphereCenter
     {
@@ -73,24 +105,29 @@ namespace sch
 
     };
 
-    struct Plane
+    struct Cone
     {
-        Eigen::MatrixXd base;
-        Eigen::Vector3d normal;
+      Eigen::Vector3d axis;
+      double cosangle;
+      
+      Cone(const Eigen::Vector3d &e, double ca)
+      {
+        axis = e;
+        cosangle = ca;
+      }
 
-        Plane(const Eigen::MatrixXd &b, const Eigen::Vector3d &n)
-        {
-            base = b;
-            normal = n;
-        }
+      Cone() {}
     };
 
   public:
-    SchCreator3D();
+    SchCreator3D(double r, double R);
     
   private:
-    Plane findPlaneBase(const Eigen::Vector3d &a, 
-                        const Eigen::Vector3d &b,
+    Plane findPlaneBase(size_t a, 
+                        size_t b,
+                        size_t c);
+    Plane findPlaneBase(size_t a, 
+                        size_t b,
                         const Eigen::Vector3d &c);
     Eigen::Vector2d findCircleThroughPoints(
                         const Eigen::Vector2d &a, 
@@ -98,29 +135,46 @@ namespace sch
                         const Eigen::Vector2d &c);
     bool getDerivative(const SphereCenter &currentSphereCenter, 
                         const Eigen::Vector3d B, double radius);
-    
-  
-  public:
-    Sphere findCircumSphere3(Eigen::Vector3d a, 
-                             Eigen::Vector3d b, 
-                             Eigen::Vector3d c);
+    Sphere findCircumSphere3(size_t a, 
+                             size_t b, 
+                             size_t c);
     Sphere findSphereThroughPoints(
-                        const Eigen::Vector3d &a, 
-                        const Eigen::Vector3d &b,
-                        const Eigen::Vector3d &c,
-                        const double radius);
+                        size_t a, 
+                        size_t b,
+                        size_t c);
+    Sphere findSphereThroughPoints(
+                        size_t a, 
+                        size_t b,
+                        size_t c,
+                        double radius);
     Sphere findCircumSphere4(
                         const Eigen::Vector3d &a, 
                         const Eigen::Vector3d &b,
                         const Eigen::Vector3d &c, 
                         const Eigen::Vector3d &d);
-    void computeVVR(const std::string &filename);
+    bool findMaxDistance();  
+    void getSmallSpheres();
+    void getBigSpheres();
+    void getCones();
+    void getBigSpherePlanes();
+    bool checkPointsInSphere(const Eigen::Vector3d &c, double r);
+  public:
+    void computeSCH(const std::string &filename);
+    void writeToFile(const std::string &filename);
+    void printVertexNeighbours();
+
+    Polyhedron_algorithms poly = Polyhedron_algorithms();
 
   private:
-    Eigen::Vector3d _points;
+    double _r, _R, _alpha, _epsilon;
+    std::vector<Eigen::Vector3d> _vertexes;
+    size_t _numberOfVertexes;
+    std::vector<Sphere> _smallSpheres;
+    std::vector<BigSphere> _bigSpheres;
+    std::vector<std::vector<Cone>> _vertexNeighbours;
+    std::vector<std::vector<Eigen::Vector3d>> _bigSphereNormals;
     std::vector<sch::SchCreator3D::SphereCenter> _sphereCenters;
-    // Polyhedron_algorithms poly;
-    
+    std::multimap<double,size_t,std::greater<double>> heap_;
   }; //class SchCreator3D
 
 } // namespace sch
