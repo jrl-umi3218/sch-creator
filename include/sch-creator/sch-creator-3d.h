@@ -141,6 +141,8 @@ namespace sch
         normal = n;
         extRadius = r;
       }
+
+      Torus() {}
     };
 
   public:
@@ -181,6 +183,7 @@ namespace sch
     void getSmallSpheres();
     void getBigSpheres();
     void getCones();
+    Torus getTorus(const Sphere &s, size_t a, size_t b);
     void getTorii();
     void getEdgeNeighbours();
     void getBigSpherePlanes();
@@ -209,7 +212,7 @@ namespace sch
     std::vector<std::vector<Eigen::Vector3d>> _bigSphereNormals;
     std::vector<std::vector<size_t>> _bigSphereEdgess;
     std::vector<sch::SchCreator3D::SphereCenter> _sphereCenters;
-    std::multimap<double,size_t,std::greater<double>> heap_;
+    std::map<double,size_t,std::greater<double>> heap_;
   }; //class SchCreator3D
 
 } // namespace sch

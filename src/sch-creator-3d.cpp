@@ -559,6 +559,27 @@ void SchCreator3D::getCones()
   std::cout << " Done." << std::endl;
 }
 
+SchCreator3D::Torus SchCreator3D::getTorus(const Sphere &s, size_t a, size_t b)
+{
+  Eigen::Vector3d center = (_vertexes[a] + _vertexes[b]) / 2; 
+  return Torus(center,
+              (_vertexes[a] - _vertexes[b]).normalized(),
+              (center - s.center).norm());
+}
+
+/*
+*   Gets the torii from the big spheres
+*/
+void SchCreator3D::getTorii()
+{
+  for(auto i = _bigSpheres.begin(); i != _bigSpheres.end(); i++)
+  {
+    _torii.push_back(getTorus((*i).s,(*i).p1,(*i).p2)); 
+    _torii.push_back(getTorus((*i).s,(*i).p1,(*i).p3)); 
+    _torii.push_back(getTorus((*i).s,(*i).p2,(*i).p3)); 
+  }
+}
+
 /*
 *   Creates the output file given a filename.
 */
@@ -614,6 +635,18 @@ void SchCreator3D::writeToFile(const std::string & filename)
 
     index++;
   }
+
+  // number of torii
+  index = 0;
+  os << _torii.size() << std::endl;
+
+  for(auto i = _torii.begin(); i != _torii.end(); i++)
+  {
+    // write torus external radius, center and normal
+    os << (*i).extRadius << ' ' << _R << ' ';
+    os << (*i).center[0] << ' ' << (*i).center[1] << ' ' << (*i).center[2] << ' ';
+    os << (*i).normal[0] << ' ' << (*i).normal[1] << ' ' << (*i).normal[2] << std::endl;
+  }
   
   // close the file
   os.close();
@@ -646,8 +679,9 @@ void SchCreator3D::computeSCH(const std::string & filename)
   getBigSphereEdges();
   getCones();
   getEdgeNeighbours();
+  getTorii();
 
-  std::multimap<double,size_t>::iterator it = heap_.begin();
+  std::map<double,size_t>::iterator it = heap_.begin();
   double maxHeap = (*it).first;
   std::cout << "Max Heap: " << maxHeap << std::endl;
 
