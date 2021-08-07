@@ -45,6 +45,17 @@ namespace sch
     {
         Eigen::MatrixXd base;
         Eigen::Vector3d normal;
+        size_t p1, p2, p3;
+
+        Plane(const Eigen::MatrixXd &b, const Eigen::Vector3d &n,
+              size_t A, size_t B, size_t C)
+        {
+            base = b;
+            normal = n;
+            p1 = A;
+            p2 = B;
+            p3 = C;
+        }
 
         Plane(const Eigen::MatrixXd &b, const Eigen::Vector3d &n)
         {
@@ -119,6 +130,19 @@ namespace sch
       Cone() {}
     };
 
+    struct Torus
+    {
+      Eigen::Vector3d center, normal;
+      double extRadius;
+
+      Torus(const Eigen::Vector3d &c, const Eigen::Vector3d &n, double r)
+      {
+        center = c;
+        normal = n;
+        extRadius = r;
+      }
+    };
+
   public:
     SchCreator3D(double r, double R);
     
@@ -126,6 +150,7 @@ namespace sch
     Plane findPlaneBase(size_t a, 
                         size_t b,
                         size_t c);
+    
     Plane findPlaneBase(size_t a, 
                         size_t b,
                         const Eigen::Vector3d &c);
@@ -148,20 +173,26 @@ namespace sch
                         size_t c,
                         double radius);
     Sphere findCircumSphere4(
-                        const Eigen::Vector3d &a, 
-                        const Eigen::Vector3d &b,
-                        const Eigen::Vector3d &c, 
-                        const Eigen::Vector3d &d);
+                        size_t a, 
+                        size_t b,
+                        size_t c, 
+                        size_t d);
     bool findMaxDistance();  
     void getSmallSpheres();
     void getBigSpheres();
     void getCones();
+    void getTorii();
+    void getEdgeNeighbours();
     void getBigSpherePlanes();
+    void getBigSphereEdges();
+    size_t getEdgeKey(size_t a, size_t b);
     bool checkPointsInSphere(const Eigen::Vector3d &c, double r);
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
     void printVertexNeighbours();
+    void printSphereEdges();
+    void printBigSpherePlanes();
 
     Polyhedron_algorithms poly = Polyhedron_algorithms();
 
@@ -171,8 +202,12 @@ namespace sch
     size_t _numberOfVertexes;
     std::vector<Sphere> _smallSpheres;
     std::vector<BigSphere> _bigSpheres;
-    std::vector<std::vector<Cone>> _vertexNeighbours;
+    std::vector<Cone> _cones;
+    std::vector<Torus> _torii;
+    std::vector<std::vector<size_t>> _vertexNeighbours;
+    std::vector<std::vector<size_t>> _edgeNeighbours;
     std::vector<std::vector<Eigen::Vector3d>> _bigSphereNormals;
+    std::vector<std::vector<size_t>> _bigSphereEdgess;
     std::vector<sch::SchCreator3D::SphereCenter> _sphereCenters;
     std::multimap<double,size_t,std::greater<double>> heap_;
   }; //class SchCreator3D

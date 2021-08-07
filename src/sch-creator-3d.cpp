@@ -15,8 +15,7 @@ SchCreator3D::SchCreator3D(double r, double R)
 
 std::ostream & operator<<(std::ostream & os, const SchCreator3D::Sphere & s)
 {
-  os << "----- Sphere -----\n";
-  os << "Center: \n" << s.center;
+  os << "Center: \t" << s.center[0] << ' ' << s.center[1] << ' ' << s.center[2];
   os << "\nRadius: " << s.radius << '\n';
 
   return os;
@@ -27,19 +26,56 @@ std::ostream & operator<<(std::ostream & os, const SchCreator3D::Sphere & s)
 */
 void SchCreator3D::printVertexNeighbours()
 {
+  std::cout << std::endl;
   for(size_t i = 0; i < _numberOfVertexes; i++)
   {
     int index = 0;
-    std::cout << "Vertex " << i << std::endl;
-    std::cout << "N" << '\t' << "COSANGLE" << "\t\t" << "AXIS COORDINATES" << std::endl;
-    for(size_t j = 0; j < _vertexNeighbours[i].size(); j++)
+    std::cout << "***** VERTEX " << i << " *****"<< std::endl;
+    std::cout << "INDEX" << '\t' << "COSANGLE" << "\t" << "AXIS COORDINATES" << std::endl;
+    for(auto j = _vertexNeighbours[i].begin(); j != _vertexNeighbours[i].end(); j++)
     {
-      std::cout << index << '\t' << _vertexNeighbours[i][j].cosangle << '\t';
-      std::cout << '\t' << _vertexNeighbours[i][j].axis[0] << '\t' << _vertexNeighbours[i][j].axis[1];
-      std::cout << '\t' << _vertexNeighbours[i][j].axis[2] << std::endl;
+      std::cout << (*j) << '\t' << _cones[*j].cosangle << '\t';
+      std::cout << _cones[*j].axis[0] << ' ' << _cones[*j].axis[1];
+      std::cout << ' ' << _cones[*j].axis[2] << std::endl;
       index++;
     }
     std::cout << std::endl;
+  }
+}
+
+/*
+*   Prints every big sphere along with its plane normals
+*/
+void SchCreator3D::printBigSpherePlanes()
+{
+  for(size_t i = 0; i < _bigSpheres.size(); i++)
+  {
+    std::cout << "***** SPHERE " << i << " *****"<< std::endl;
+    std::cout << _bigSpheres[i].s;
+    std::cout << "----- Normals -----" << std::endl;
+    for(auto j = _bigSphereNormals[i].begin(); j != _bigSphereNormals[i].end(); j++)
+    {
+      std::cout << (*j)[0] << ' ' << (*j)[1] << ' ' << (*j)[2] << std::endl;
+    }
+    std::cout << std::endl;
+  }
+
+}
+
+/*
+*   Prints the index of every vertex on the big sphere along with its edges
+*/
+void SchCreator3D::printSphereEdges()
+{
+  for(size_t i = 0; i < _bigSpheres.size(); i++)
+  {
+    std::cout << "Sphere " << i << std::endl;
+    std::cout << _bigSpheres[i].p1 << ' ' << _bigSpheres[i].p2 << ' ' << _bigSpheres[i].p3 << std::endl;
+    for(auto j = _bigSphereEdgess[i].begin(); j != _bigSphereEdgess[i].end(); j++)
+    {
+      std::cout << "Edge: ";
+      std::cout << poly.edges_[(*j)].a << ' ' << poly.edges_[(*j)].b << std::endl;
+    }
   }
 }
 
@@ -86,7 +122,7 @@ SchCreator3D::Plane SchCreator3D::findPlaneBase(size_t a,
   Eigen::MatrixXd base(2, 3);
   base << ex.transpose(), ey.transpose();
 
-  return Plane(base, n);
+  return Plane(base, n, a, b, c);
 }
 
 /*
@@ -234,18 +270,22 @@ SchCreator3D::Sphere SchCreator3D::findSphereThroughPoints(size_t a,
  *   Given 4 points, the function returns the Sphere
  *   on whose surface lay the points.
  */
-SchCreator3D::Sphere SchCreator3D::findCircumSphere4(const Eigen::Vector3d & a,
-                                                     const Eigen::Vector3d & b,
-                                                     const Eigen::Vector3d & c,
-                                                     const Eigen::Vector3d & d)
+SchCreator3D::Sphere SchCreator3D::findCircumSphere4(size_t a,
+                                                     size_t b,
+                                                     size_t c,
+                                                     size_t d)
 {
   // ussing crammer's rule find base matrix
   Eigen::Matrix4d T;
-  T << a[0], a[1], a[2], 1, b[0], b[1], b[2], 1, c[0], c[1], c[2], 1, d[0], d[1], d[2], 1;
+  T << _vertexes[a][0], _vertexes[a][1], _vertexes[a][2], 1,
+       _vertexes[b][0], _vertexes[b][1], _vertexes[b][2], 1, 
+       _vertexes[c][0], _vertexes[c][1], _vertexes[c][2], 1, 
+       _vertexes[d][0], _vertexes[d][1], _vertexes[d][2], 1;
 
   // get squared norm values
   Eigen::Vector4d t;
-  t << -pow(a.norm(), 2), -pow(b.norm(), 2), -pow(c.norm(), 2), -pow(d.norm(), 2);
+  t << -pow(_vertexes[a].norm(), 2), -pow(_vertexes[b].norm(), 2),
+       -pow(_vertexes[c].norm(), 2), -pow(_vertexes[d].norm(), 2);
 
   // from base matrix get Mn
   Eigen::Matrix4d M1, M2, M3, M4;
@@ -333,12 +373,14 @@ void SchCreator3D::getBigSpheres()
   {
     // get circum sphere
     s = findCircumSphere3((*i).a,(*i).b,(*i).c);
+    // add circum radius to heap
+    heap_.insert(std::make_pair(s.radius,currTriangle));
     // get big sphere
+    s = findSphereThroughPoints((*i).a,(*i).b,(*i).c);
     bs = BigSphere(s,(*i).c,(*i).b,(*i).a);
     // add to big sphere vector
     _bigSpheres.push_back(bs);
-    // add to heap
-    heap_.insert(std::make_pair(s.radius,currTriangle));
+    
     // increase the current triangle index
     currTriangle++;
   }
@@ -368,24 +410,141 @@ void SchCreator3D::getBigSpherePlanes()
 }
 
 /*
+*   Finds a unique key/ID given two numbers.
+*/
+size_t SchCreator3D::getEdgeKey(size_t a, size_t b)
+{
+  return ((a<b)?(a*_numberOfVertexes+b):(b*_numberOfVertexes+a));
+}
+
+
+/*
+*     Finds the three neighboring edges to a big sphere.
+*/
+void SchCreator3D::getBigSphereEdges()
+{
+  size_t index = 0;
+  std::map<size_t,size_t> orderedEdges;
+  std::map<size_t,size_t>::iterator it;
+  _bigSphereEdgess.resize(_bigSpheres.size());
+  
+  for(size_t i = 0; i < poly.edges_.size(); i++)
+  {
+    orderedEdges.insert(std::make_pair(getEdgeKey(poly.edges_[i].a,
+                                       poly.edges_[i].b),i));
+  }
+
+  for(auto i = _bigSpheres.begin(); i != _bigSpheres.end(); i++)
+  {
+    it = orderedEdges.find(getEdgeKey((*i).p1, (*i).p2));
+    _bigSphereEdgess[index].push_back((*it).second);
+
+    it = orderedEdges.find(getEdgeKey((*i).p2, (*i).p3));
+    _bigSphereEdgess[index].push_back((*it).second);
+
+    it = orderedEdges.find(getEdgeKey((*i).p1, (*i).p3));
+    _bigSphereEdgess[index].push_back((*it).second);
+
+    index++;
+  }
+}
+
+
+/*
+*   Finds the neighbpours of an edge (2 vertexes and 2 triangles), finds the circumsphere
+*   made up by the four neighbours and adds the radius to the heap.
+*/
+void SchCreator3D::getEdgeNeighbours()
+{
+  size_t index = 0,a;
+  std::pair<size_t,size_t> vertexes, triangles;
+  std::vector<std::pair<std::pair<size_t,size_t>,std::pair<size_t,size_t>>> neighbours;
+  std::multimap<size_t,size_t> orderedTriangles;
+  std::set<size_t> orderedVertexes;
+
+  // get all triangles ordered by edges
+  for(auto i = poly.triangles_.begin(); i != poly.triangles_.end(); i++)
+  {
+    orderedTriangles.insert(std::make_pair(getEdgeKey((*i).a,(*i).b), index));
+    orderedTriangles.insert(std::make_pair(getEdgeKey((*i).b,(*i).c), index));
+    orderedTriangles.insert(std::make_pair(getEdgeKey((*i).a,(*i).c), index));
+    index++;
+  }
+
+  for(auto i = poly.edges_.begin(); i != poly.edges_.end(); i++)
+  {
+    // find the neighboring triangles
+    auto it = orderedTriangles.equal_range(getEdgeKey((*i).a, (*i).b));
+    for(auto j = it.first; j != it.second; j++)
+    {
+      // get all neighboring vertexes
+      orderedVertexes.insert(poly.triangles_[(*j).second].a);
+      orderedVertexes.insert(poly.triangles_[(*j).second].b);
+      orderedVertexes.insert(poly.triangles_[(*j).second].c);
+    }
+
+    // remove known vertexes
+    orderedVertexes.erase((*i).a);
+    orderedVertexes.erase((*i).b);
+
+    // get remaining vertexes
+    auto iterator = orderedVertexes.begin();
+    a = (*iterator);
+    orderedVertexes.erase(iterator);
+    iterator = orderedVertexes.begin();
+
+    // get all four neighboring vertexes
+    neighbours.push_back(std::make_pair(std::make_pair((*i).a, (*i).b),
+                         std::make_pair(a,(*iterator))));
+    orderedVertexes.clear();
+  }
+
+  Sphere s;
+  index = 0;
+  for(auto i = neighbours.begin(); i != neighbours.end(); i++)
+  {
+    // find 4 vertex circumsphere
+    s = findCircumSphere4((*i).first.first,(*i).first.second,(*i).second.first,(*i).second.second);
+    // add radius to heap
+    heap_.insert(std::make_pair(s.radius, index));
+    index++;
+  }
+
+  // index=0;
+  // for(auto i = _cones.begin(); i != _cones.end(); i++)
+  // {
+  //   std::cout << "Cone " << index << std::endl;
+  //   std::cout << "Neighbouring vertexes: " << neighbours[index].first.first << ' ' << neighbours[index].first.second;
+  //   std::cout << ' ' << neighbours[index].second.first << ' ' << neighbours[index].second.second << std::endl;
+  //   std::cout << std::endl;
+  //   index++;
+  // }
+}
+
+/*
 *   Gets the neighboring edges to each small sphere.
 */
 void SchCreator3D::getCones()
 {
   std::cout << "Finding neighbours...";
 
-  Cone edge;
   double cosangle;
-  std::multimap<size_t,Cone> orderedEdges;
+  size_t index = 0;
+  Eigen::Vector3d edge;
+  std::multimap<size_t,size_t> orderedEdges;
   _vertexNeighbours.resize(_numberOfVertexes);
 
-  // order edges by vertexes
   for(auto i = poly.edges_.begin(); i != poly.edges_.end(); i++)
   {
+    // get the toruses
     cosangle = (*i).edge.norm() / (2*_alpha);
-    edge = Cone(Eigen::Vector3d((*i).edge.m_x,(*i).edge.m_y,(*i).edge.m_z), cosangle);
-    orderedEdges.insert(std::make_pair((*i).a, edge));
-    orderedEdges.insert(std::make_pair((*i).b, edge));
+    edge = Eigen::Vector3d((*i).edge.m_x,(*i).edge.m_y,(*i).edge.m_z);
+    _cones.push_back(Cone(edge,cosangle));
+
+    // order toruses by vertex
+    orderedEdges.insert(std::make_pair((*i).a, index));
+    orderedEdges.insert(std::make_pair((*i).b, index));
+    index++;
   }
 
   for(size_t i = 0; i < _numberOfVertexes; i++)
@@ -408,7 +567,7 @@ void SchCreator3D::writeToFile(const std::string & filename)
   // write data into a file
   std::ofstream os;
   os.open(filename.c_str());
-  os.precision(16);
+  os.precision(10);
   size_t index = 0;
 
   // radii used for computation on first line
@@ -419,18 +578,45 @@ void SchCreator3D::writeToFile(const std::string & filename)
   // writes small spheres
   for(auto i = _smallSpheres.begin(); i != _smallSpheres.end(); i++)
   {
-    std::cout << (*i).radius << ' ' << (*i).center[0] << ' ';
-    std::cout << (*i).center[1] << ' ' << (*i).center[2] << std::endl;
+    os << (*i).radius << ' ' << (*i).center[0] << ' ';
+    os << (*i).center[1] << ' ' << (*i).center[2] << std::endl;
 
     // number of neighbours
-    std::cout << _vertexNeighbours[index].size() << std::endl;
+    os << _vertexNeighbours[index].size() << std::endl;
     for(auto j = _vertexNeighbours[index].begin(); j != _vertexNeighbours[index].end(); j++)
     {
       // neighbours
-      std::cout << (*j).cosangle << ' ' << (*j).axis[0];
-      std::cout << ' ' << (*j).axis[1] << ' ' << (*j).axis[2]; 
+      os << (*j) << ' ' << _cones[*j].cosangle << ' ' << _cones[*j].axis[0];
+      os << ' ' << _cones[*j].axis[1] << ' ' << _cones[*j].axis[2] << std::endl; 
     }
+    index++;
   }
+
+  // number of big spheres
+  index = 0;
+  os << _bigSpheres.size() << std::endl;
+  for(auto i = _bigSpheres.begin(); i != _bigSpheres.end(); i++)
+  {
+    // radius and center of big sphere
+    os << (*i).s.radius << ' ' << (*i).s.center[0] << ' ';
+    os << (*i).s.center[1] << ' ' << (*i).s.center[2] << std::endl;
+
+    // coordinates of the three points touching the sphere
+    os << _vertexes[(*i).p1][0] << ' ' << _vertexes[(*i).p1][1] << ' ' << _vertexes[(*i).p1][2] << ' ';
+    os << _vertexes[(*i).p2][0] << ' ' << _vertexes[(*i).p2][1] << ' ' << _vertexes[(*i).p2][2] << ' ';
+    os << _vertexes[(*i).p3][0] << ' ' << _vertexes[(*i).p3][1] << ' ' << _vertexes[(*i).p3][2] << std::endl;
+
+    // normals to the sphere planes
+    for(auto j = _bigSphereNormals[index].begin(); j != _bigSphereNormals[index].end(); j++)
+    {
+      os << (*j)[0] << ' ' << (*j)[1] << ' ' << (*j)[2] << std::endl;
+    } 
+
+    index++;
+  }
+  
+  // close the file
+  os.close();
 }
 
 void SchCreator3D::computeSCH(const std::string & filename)
@@ -441,9 +627,9 @@ void SchCreator3D::computeSCH(const std::string & filename)
   // get no. of vertex
   _numberOfVertexes = poly.vertexes_.size();
   _vertexes.reserve(_numberOfVertexes);
-  std::cout << "No. Vertex: " << _numberOfVertexes << std::endl;
-  std::cout << "No. Triangles: " << poly.triangles_.size() << std::endl;
-  std::cout << "No. Edges: " << poly.edges_.size() << std::endl;
+  // std::cout << "No. Vertex: " << _numberOfVertexes << std::endl;
+  // std::cout << "No. Triangles: " << poly.triangles_.size() << std::endl;
+  // std::cout << "No. Edges: " << poly.edges_.size() << std::endl;
 
   // Ensure alpha is smaller than the max. body distance,
   if(findMaxDistance())
@@ -457,7 +643,9 @@ void SchCreator3D::computeSCH(const std::string & filename)
   getSmallSpheres();
   getBigSpheres();
   getBigSpherePlanes();
+  getBigSphereEdges();
   getCones();
+  getEdgeNeighbours();
 
   std::multimap<double,size_t>::iterator it = heap_.begin();
   double maxHeap = (*it).first;
@@ -516,9 +704,7 @@ int main(int argc, char ** argv)
     std::cout << "Opening " << input << std::endl;
     sch::SchCreator3D sch(r,R);
     sch.computeSCH(input);
-
-    
-
+    sch.writeToFile(output);
       
 // /home/amrf/balloon-inflating/sch-visualization/tests/shared-tests/data/sample_polyhedron.otp 
   }
