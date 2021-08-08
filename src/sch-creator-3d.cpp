@@ -55,7 +55,7 @@ void SchCreator3D::printBigSpherePlanes()
     std::cout << "----- Normals -----" << std::endl;
     for(auto j = _bigSphereNormals[i].begin(); j != _bigSphereNormals[i].end(); j++)
     {
-      std::cout << (*j)[0] << ' ' << (*j)[1] << ' ' << (*j)[2] << std::endl;
+      std::cout << (*j).first << ' ' << (*j).second[0] << ' ' << (*j).second[1] << ' ' << (*j).second[2] << std::endl;
     }
     std::cout << std::endl;
   }
@@ -392,18 +392,62 @@ void SchCreator3D::getBigSpherePlanes()
   std::cout << "Finding planes...";
 
   Plane p;
+  Torus t;
+  size_t id;
+  std::set<size_t> orderedTorii;
   _bigSphereNormals.resize(_bigSpheres.size());
 
   for(size_t i = 0; i < _bigSpheres.size(); i++)
   {
+    id = getEdgeKey(_bigSpheres[i].p1,_bigSpheres[i].p2);
+    // add the torus to the vector only if it doesn't exist already
+    if(!orderedTorii.count(id))
+    {
+      t = getTorus(_bigSpheres[i].s,_bigSpheres[i].p1,_bigSpheres[i].p2);
+      _torii.push_back(std::pair<size_t,Torus>(id,t));
+      orderedTorii.insert(id);
+      // get the id
+      ids.insert(std::make_pair(id,_torii.size()-1));
+    }
+    // get the plane normal
     p = findPlaneBase(_bigSpheres[i].p1,_bigSpheres[i].p2,_bigSpheres[i].s.center);
-    _bigSphereNormals[i].push_back(p.normal);
+    _bigSphereNormals[i].push_back(std::pair<size_t,Eigen::Vector3d>(ids[id],p.normal));
 
+    // get the torus id
+    id = getEdgeKey(_bigSpheres[i].p1,_bigSpheres[i].p3);
+    // add the torus to the vector only if it doesn't exist already
+    if(!orderedTorii.count(id))
+    {
+      t = getTorus(_bigSpheres[i].s,_bigSpheres[i].p1,_bigSpheres[i].p3);
+      _torii.push_back(std::pair<size_t,Torus>(id,t));
+      orderedTorii.insert(id);
+      // get the id
+      ids.insert(std::make_pair(id,_torii.size()-1));
+    }
+    // get the plane normal
     p = findPlaneBase(_bigSpheres[i].p1,_bigSpheres[i].p3,_bigSpheres[i].s.center);
-    _bigSphereNormals[i].push_back(p.normal);
+    _bigSphereNormals[i].push_back(std::pair<size_t,Eigen::Vector3d>(ids[id],p.normal));
 
+    // get the torus id
+    id = getEdgeKey(_bigSpheres[i].p2,_bigSpheres[i].p3);
+    // add the torus to the vector only if it doesn't exist already
+    if(!orderedTorii.count(id))
+    {
+      t = getTorus(_bigSpheres[i].s,_bigSpheres[i].p2,_bigSpheres[i].p3);
+      _torii.push_back(std::pair<size_t,Torus>(id,t));
+      orderedTorii.insert(id);
+      // get the id
+      ids.insert(std::make_pair(id,_torii.size()-1));
+    }
+    // get the plane normal
     p = findPlaneBase(_bigSpheres[i].p2,_bigSpheres[i].p3,_bigSpheres[i].s.center);
-    _bigSphereNormals[i].push_back(p.normal);
+    _bigSphereNormals[i].push_back(std::pair<size_t,Eigen::Vector3d>(ids[id],p.normal));
+  }
+
+  for(auto i = _bigSphereNormals.begin(); i != _bigSphereNormals.end(); i++)
+  {
+    for(auto j = (*i).begin(); j != (*i).end(); j++)
+      (*j).first += _smallSpheres.size() + _bigSpheres.size();
   }
 
   std::cout << " Done." << std::endl;
@@ -458,7 +502,6 @@ void SchCreator3D::getEdgeNeighbours()
 {
   size_t index = 0,a;
   std::pair<size_t,size_t> vertexes, triangles;
-  std::vector<std::pair<std::pair<size_t,size_t>,std::pair<size_t,size_t>>> neighbours;
   std::multimap<size_t,size_t> orderedTriangles;
   std::set<size_t> orderedVertexes;
 
@@ -494,31 +537,22 @@ void SchCreator3D::getEdgeNeighbours()
     iterator = orderedVertexes.begin();
 
     // get all four neighboring vertexes
-    neighbours.push_back(std::make_pair(std::make_pair((*i).a, (*i).b),
+    _edgeNeighbours.push_back(std::make_pair(std::make_pair((*i).a, (*i).b),
                          std::make_pair(a,(*iterator))));
     orderedVertexes.clear();
   }
 
   Sphere s;
   index = 0;
-  for(auto i = neighbours.begin(); i != neighbours.end(); i++)
+  for(auto i = _edgeNeighbours.begin(); i != _edgeNeighbours.end(); i++)
   {
     // find 4 vertex circumsphere
-    s = findCircumSphere4((*i).first.first,(*i).first.second,(*i).second.first,(*i).second.second);
+    s = findCircumSphere4((*i).first.first,(*i).first.second,
+                          (*i).second.first,(*i).second.second);
     // add radius to heap
     heap_.insert(std::make_pair(s.radius, index));
     index++;
   }
-
-  // index=0;
-  // for(auto i = _cones.begin(); i != _cones.end(); i++)
-  // {
-  //   std::cout << "Cone " << index << std::endl;
-  //   std::cout << "Neighbouring vertexes: " << neighbours[index].first.first << ' ' << neighbours[index].first.second;
-  //   std::cout << ' ' << neighbours[index].second.first << ' ' << neighbours[index].second.second << std::endl;
-  //   std::cout << std::endl;
-  //   index++;
-  // }
 }
 
 /*
@@ -536,12 +570,12 @@ void SchCreator3D::getCones()
 
   for(auto i = poly.edges_.begin(); i != poly.edges_.end(); i++)
   {
-    // get the toruses
+    // get the cones
     cosangle = (*i).edge.norm() / (2*_alpha);
     edge = Eigen::Vector3d((*i).edge.m_x,(*i).edge.m_y,(*i).edge.m_z);
     _cones.push_back(Cone(edge,cosangle));
 
-    // order toruses by vertex
+    // order cones by vertex
     orderedEdges.insert(std::make_pair((*i).a, index));
     orderedEdges.insert(std::make_pair((*i).b, index));
     index++;
@@ -555,10 +589,13 @@ void SchCreator3D::getCones()
       _vertexNeighbours[i].push_back((*j).second);
     }
   }
-
+  
   std::cout << " Done." << std::endl;
 }
 
+/*
+*   Builds the Torus given a sphere and two points.
+*/
 SchCreator3D::Torus SchCreator3D::getTorus(const Sphere &s, size_t a, size_t b)
 {
   Eigen::Vector3d center = (_vertexes[a] + _vertexes[b]) / 2; 
@@ -567,17 +604,77 @@ SchCreator3D::Torus SchCreator3D::getTorus(const Sphere &s, size_t a, size_t b)
               (center - s.center).norm());
 }
 
+void SchCreator3D::getTorusNeighbours()
+{
+  size_t index = 0;
+  std::pair<size_t,size_t> vertexes, triangles;
+  std::multimap<size_t,size_t> orderedTriangles, orderedCones;
+  std::vector<size_t> tempTriangle, tempCone;
+
+  // get all triangles ordered by edge key
+  for(auto i = poly.triangles_.begin(); i != poly.triangles_.end(); i++)
+  {
+    orderedTriangles.insert(std::make_pair(getEdgeKey((*i).a,(*i).b), index));
+    orderedTriangles.insert(std::make_pair(getEdgeKey((*i).b,(*i).c), index));
+    orderedTriangles.insert(std::make_pair(getEdgeKey((*i).a,(*i).c), index));
+    index++;
+  }
+
+  index = 0;
+  // get all edges ordered by edge key
+  for(auto i = poly.edges_.begin(); i != poly.edges_.end(); i++)
+  {
+    orderedCones.insert(std::make_pair(getEdgeKey((*i).a,(*i).b),index));
+    index++;
+  }
+
+  index = 0;
+  for(auto i = _torii.begin(); i != _torii.end(); i++)
+  {
+    auto itTriangles = orderedTriangles.equal_range((*i).first);
+    for(auto j = itTriangles.first; j != itTriangles.second; j++)
+    {
+      tempTriangle.push_back((*j).second);
+    }
+    auto itCones = orderedCones.equal_range((*i).first);
+    for(auto j = itCones.first; j != itCones.second; j++)
+    {
+      tempCone.push_back((*j).second);
+    }
+
+    _toriiNeighbours.insert(std::make_pair(index,
+                            std::make_pair(std::make_pair(tempCone[0],tempCone[1]),
+                            std::make_pair(tempTriangle[0],tempTriangle[1]))));
+    index++;
+  }
+}
+
 /*
 *   Gets the torii from the big spheres
 */
-void SchCreator3D::getTorii()
+void SchCreator3D::removeUselessTorii()
 {
-  for(auto i = _bigSpheres.begin(); i != _bigSpheres.end(); i++)
-  {
-    _torii.push_back(getTorus((*i).s,(*i).p1,(*i).p2)); 
-    _torii.push_back(getTorus((*i).s,(*i).p1,(*i).p3)); 
-    _torii.push_back(getTorus((*i).s,(*i).p2,(*i).p3)); 
-  }
+  // std::map<int, bool> torusToErase, torusToEraseID;
+  // std::multimap<int, int> linkedsSphereIDs;
+  // std::multimap<int, std::pair<int, int> > linkedbSphereIDs;
+  // //find the useless toruses : those for which the two linked big spheres have the same center;
+  // //and store the data to make the needed changes after
+  // int currentTorusID;
+  // for(auto it = _edgeNeighbours.begin(); it != _edgeNeighbours.end(); ++it)
+  // {
+  //   int firstID = _bigSpheres[(*it.second.second.first)].first - _smallSpheres.size();
+  //   int secondID = _bigSpheres[(*it.second.second.second)].first - _smallSpheres.size();
+  //   if((_bigSpheres[firstID].s.center - _bigSpheres[secondID.s]_center).normsquared() < epsilon)
+  //   {
+  //     currentTorusID = _smallSpheres.size() + _bigSpheres.size() + ids[(*it).first.first.first];
+  //     torusToEraseID.insert(std::pair<int, bool>(currentTorusID, true));
+  //     torusToErase.insert(std::pair<int, bool>(it->first, true));
+  //     linkedsSphereIDs.insert(std::pair<int, int>(it->second.first.first.first, currentTorusID));
+  //     linkedsSphereIDs.insert(std::pair<int, int>(it->second.first.second.first, currentTorusID));
+  //     linkedbSphereIDs.insert(std::pair<int, std::pair<int, int> >(it->second.second.first.first, std::pair<int, int>(currentTorusID, it->second.second.second.first)));
+  //     linkedbSphereIDs.insert(std::pair<int, std::pair<int, int> >(it->second.second.second.first, std::pair<int, int>(currentTorusID, it->second.second.first.first)));
+  //   }
+  // }
 }
 
 /*
@@ -630,7 +727,7 @@ void SchCreator3D::writeToFile(const std::string & filename)
     // normals to the sphere planes
     for(auto j = _bigSphereNormals[index].begin(); j != _bigSphereNormals[index].end(); j++)
     {
-      os << (*j)[0] << ' ' << (*j)[1] << ' ' << (*j)[2] << std::endl;
+      os << (*j).first << ' ' << (*j).second[0] << ' ' << (*j).second[1] << ' ' << (*j).second[2] << std::endl;
     } 
 
     index++;
@@ -643,9 +740,29 @@ void SchCreator3D::writeToFile(const std::string & filename)
   for(auto i = _torii.begin(); i != _torii.end(); i++)
   {
     // write torus external radius, center and normal
-    os << (*i).extRadius << ' ' << _R << ' ';
-    os << (*i).center[0] << ' ' << (*i).center[1] << ' ' << (*i).center[2] << ' ';
-    os << (*i).normal[0] << ' ' << (*i).normal[1] << ' ' << (*i).normal[2] << std::endl;
+    os << (*i).second.extRadius << ' ' << _R << ' ';
+    os << (*i).second.center[0] << ' ' << (*i).second.center[1] << ' ' << (*i).second.center[2] << ' ';
+    os << (*i).second.normal[0] << ' ' << (*i).second.normal[1] << ' ' << (*i).second.normal[2] << std::endl;
+
+    os << _cones[_toriiNeighbours[(*i).first].first.first].cosangle << ' ';
+    os << _cones[_toriiNeighbours[(*i).first].first.first].axis[0] << ' ';
+    os << _cones[_toriiNeighbours[(*i).first].first.first].axis[1] << ' ';
+    os << _cones[_toriiNeighbours[(*i).first].first.first].axis[2] << ' ' << std::endl;
+
+    os << _cones[_toriiNeighbours[(*i).first].first.second].cosangle << ' ';
+    os << _cones[_toriiNeighbours[(*i).first].first.second].axis[0] << ' ';
+    os << _cones[_toriiNeighbours[(*i).first].first.second].axis[1] << ' ';
+    os << _cones[_toriiNeighbours[(*i).first].first.second].axis[2] << ' ' << std::endl;
+
+    for(auto j = _bigSphereNormals[_toriiNeighbours[(*i).first].second.first].begin();
+        j != _bigSphereNormals[_toriiNeighbours[(*i).first].second.first].end(); j++)
+    {
+      os << (*j).first << ' ';
+      os << (*j).second[0] << ' ';
+      os << (*j).second[1] << ' ';
+      os << (*j).second[2] << std::endl;
+    }
+    
   }
   
   // close the file
@@ -679,7 +796,8 @@ void SchCreator3D::computeSCH(const std::string & filename)
   getBigSphereEdges();
   getCones();
   getEdgeNeighbours();
-  getTorii();
+  getTorusNeighbours();
+  // getTorii();
 
   std::map<double,size_t>::iterator it = heap_.begin();
   double maxHeap = (*it).first;

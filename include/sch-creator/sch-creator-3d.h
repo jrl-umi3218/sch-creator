@@ -184,8 +184,9 @@ namespace sch
     void getBigSpheres();
     void getCones();
     Torus getTorus(const Sphere &s, size_t a, size_t b);
-    void getTorii();
+    void removeUselessTorii();
     void getEdgeNeighbours();
+    void getTorusNeighbours();
     void getBigSpherePlanes();
     void getBigSphereEdges();
     size_t getEdgeKey(size_t a, size_t b);
@@ -206,11 +207,13 @@ namespace sch
     std::vector<Sphere> _smallSpheres;
     std::vector<BigSphere> _bigSpheres;
     std::vector<Cone> _cones;
-    std::vector<Torus> _torii;
+    std::vector<std::pair<size_t,Torus>> _torii;
     std::vector<std::vector<size_t>> _vertexNeighbours;
-    std::vector<std::vector<size_t>> _edgeNeighbours;
-    std::vector<std::vector<Eigen::Vector3d>> _bigSphereNormals;
+    std::vector<std::pair<std::pair<size_t,size_t>,std::pair<size_t,size_t>>> _edgeNeighbours;
+    std::vector<std::vector<std::pair<size_t,Eigen::Vector3d>>> _bigSphereNormals;
     std::vector<std::vector<size_t>> _bigSphereEdgess;
+    std::map<size_t, size_t> ids;
+    std::map<size_t,std::pair<std::pair<size_t,size_t>,std::pair<size_t,size_t>>> _toriiNeighbours;
     std::vector<sch::SchCreator3D::SphereCenter> _sphereCenters;
     std::map<double,size_t,std::greater<double>> heap_;
   }; //class SchCreator3D
