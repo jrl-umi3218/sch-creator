@@ -183,11 +183,13 @@ namespace sch
     void getSmallSpheres();
     void getBigSpheres();
     void getCones();
+    void getTorii();
     Torus getTorus(const Sphere &s, size_t a, size_t b);
     void removeUselessTorii();
     void getEdgeNeighbours();
     void getTorusNeighbours();
     void getBigSpherePlanes();
+    Eigen::Vector3d getBigSpherePlaneNormal(size_t a,size_t b,Eigen::Vector3d c);
     void getBigSphereEdges();
     size_t getEdgeKey(size_t a, size_t b);
     bool checkPointsInSphere(const Eigen::Vector3d &c, double r);
@@ -206,14 +208,17 @@ namespace sch
     size_t _numberOfVertexes;
     std::vector<Sphere> _smallSpheres;
     std::vector<BigSphere> _bigSpheres;
-    std::vector<Cone> _cones;
+    std::vector<std::pair<size_t,Cone>> _cones;
     std::vector<std::pair<size_t,Torus>> _torii;
+    std::map<size_t,std::pair<size_t,size_t>> toriiKey;
     std::vector<std::vector<size_t>> _vertexNeighbours;
     std::vector<std::pair<std::pair<size_t,size_t>,std::pair<size_t,size_t>>> _edgeNeighbours;
     std::vector<std::vector<std::pair<size_t,Eigen::Vector3d>>> _bigSphereNormals;
     std::vector<std::vector<size_t>> _bigSphereEdgess;
     std::map<size_t, size_t> ids;
-    std::map<size_t,std::pair<std::pair<size_t,size_t>,std::pair<size_t,size_t>>> _toriiNeighbours;
+    std::map<size_t,std::pair<std::pair<size_t,size_t>,
+                              std::pair<std::pair<size_t,size_t>,
+                                        std::pair<size_t,size_t>>>> _toriiNeighbours;
     std::vector<sch::SchCreator3D::SphereCenter> _sphereCenters;
     std::map<double,size_t,std::greater<double>> heap_;
   }; //class SchCreator3D
