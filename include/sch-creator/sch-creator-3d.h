@@ -1,5 +1,5 @@
-/*! \file sch-creator-2d.h
- *  \brief Declaration file of the Class sch-creator-2d
+/*! \file sch-creator-3d.h
+ *  \brief Declaration file of the Class sch-creator-3d
  *  \author Ana Ruiz
  *  \version 0.0.0
  *	\date 21.07.09
@@ -11,6 +11,7 @@
 #include <Eigen/Dense>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 // #include <math.h>
 // #include <memory>
 #include <string>
@@ -101,6 +102,11 @@ namespace sch
 
     };
 
+    struct Face
+    {
+      std::pair<size_t,Eigen::Vector3d> plane1, plane2, plane3; 
+    };
+
     struct SphereCenter
     {
         double circleRadius;
@@ -145,6 +151,9 @@ namespace sch
       Torus() {}
     };
 
+    typedef std::pair<size_t,Cone> SCHcone;
+    typedef std::pair<size_t,Eigen::Vector3d> SCHplane;
+
   public:
     SchCreator3D(double r, double R);
     
@@ -152,75 +161,61 @@ namespace sch
     Plane findPlaneBase(size_t a, 
                         size_t b,
                         size_t c);
-    
-    Plane findPlaneBase(size_t a, 
-                        size_t b,
-                        const Eigen::Vector3d &c);
     Eigen::Vector2d findCircleThroughPoints(
                         const Eigen::Vector2d &a, 
                         const Eigen::Vector2d &b,
                         const Eigen::Vector2d &c);
     bool getDerivative(const SphereCenter &currentSphereCenter, 
-                        const Eigen::Vector3d B, double radius);
+                        const Eigen::Vector3d &B, double radius);
     Sphere findCircumSphere3(size_t a, 
                              size_t b, 
                              size_t c);
-    Sphere findSphereThroughPoints(
-                        size_t a, 
-                        size_t b,
-                        size_t c);
-    Sphere findSphereThroughPoints(
-                        size_t a, 
-                        size_t b,
-                        size_t c,
-                        double radius);
-    Sphere findCircumSphere4(
-                        size_t a, 
-                        size_t b,
-                        size_t c, 
-                        size_t d);
+    Sphere findSphereThroughPoints(size_t a, 
+                                   size_t b,
+                                   size_t c);
+    Sphere findCircumSphere4(size_t a, 
+                             size_t b,
+                             size_t c, 
+                             size_t d);
     bool findMaxDistance();  
     void getSmallSpheres();
     void getBigSpheres();
-    void getCones();
+    std::pair<SCHcone,SCHcone> getCones(size_t a, size_t b,
+                                        const Eigen::Vector3d &n);
     void getTorii();
     Torus getTorus(const Sphere &s, size_t a, size_t b);
     void removeUselessTorii();
-    void getEdgeNeighbours();
-    void getTorusNeighbours();
-    void getBigSpherePlanes();
-    Eigen::Vector3d getBigSpherePlaneNormal(size_t a,size_t b,Eigen::Vector3d c);
-    void getBigSphereEdges();
+    void getVertexNeighbours();
+    void getHeap();
+    size_t findVertex(const BigSphere &bs, size_t a, size_t b);
+    double getCosine(size_t a, size_t b);
+    Eigen::Vector3d getPlaneNormal(size_t a,size_t b,Eigen::Vector3d c);
     size_t getEdgeKey(size_t a, size_t b);
-    bool checkPointsInSphere(const Eigen::Vector3d &c, double r);
+    bool checkPointsInSphere(const Sphere &s);
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
-    void printVertexNeighbours();
-    void printSphereEdges();
-    void printBigSpherePlanes();
+
 
     Polyhedron_algorithms poly = Polyhedron_algorithms();
 
   private:
     double _r, _R, _alpha, _epsilon;
-    std::vector<Eigen::Vector3d> _vertexes;
+
     size_t _numberOfVertexes;
+    std::vector<Eigen::Vector3d> _vertexes;
+    std::vector<std::map<size_t,Cone>> _vertexNeighbours;
+
     std::vector<Sphere> _smallSpheres;
     std::vector<BigSphere> _bigSpheres;
-    std::vector<std::pair<size_t,Cone>> _cones;
+    std::vector<Face> _bigSphereNormals;
+
+    std::map<size_t,size_t> toriiKey;
     std::vector<std::pair<size_t,Torus>> _torii;
-    std::map<size_t,std::pair<size_t,size_t>> toriiKey;
-    std::vector<std::vector<size_t>> _vertexNeighbours;
-    std::vector<std::pair<std::pair<size_t,size_t>,std::pair<size_t,size_t>>> _edgeNeighbours;
-    std::vector<std::vector<std::pair<size_t,Eigen::Vector3d>>> _bigSphereNormals;
-    std::vector<std::vector<size_t>> _bigSphereEdgess;
-    std::map<size_t, size_t> ids;
-    std::map<size_t,std::pair<std::pair<size_t,size_t>,
-                              std::pair<std::pair<size_t,size_t>,
-                                        std::pair<size_t,size_t>>>> _toriiNeighbours;
-    std::vector<sch::SchCreator3D::SphereCenter> _sphereCenters;
-    std::map<double,size_t,std::greater<double>> heap_;
+    std::map<size_t,std::pair<SCHcone,SCHcone>> _toriiCones;
+    std::map<size_t,std::pair<SCHplane,SCHplane>> _toriiPlanes;
+
+    std::map<double,size_t,std::greater<double>> _heap;
   }; //class SchCreator3D
 
 } // namespace sch
