@@ -158,40 +158,45 @@ namespace sch
     SchCreator3D(double r, double R);
     
   private:
-    Plane findPlaneBase(size_t a, 
-                        size_t b,
-                        size_t c);
+    bool findMaxDistance();  
+
+    void getSmallSpheres();
+
+    void getBigSpheres();
+
+    // get key functions
+    size_t getEdgeKey(size_t a, size_t b);
+    size_t getKey(size_t a, size_t b);
+
+    // functions required to get the big spheres
+    Sphere findCircumSphere3(size_t a, size_t b, size_t c);
+    Sphere findSphereThroughPoints(size_t a, size_t b,
+                                   size_t c);                         
+    Plane findPlaneBase(size_t a, size_t b, size_t c);
     Eigen::Vector2d findCircleThroughPoints(
                         const Eigen::Vector2d &a, 
                         const Eigen::Vector2d &b,
                         const Eigen::Vector2d &c);
-    bool getDerivative(const SphereCenter &currentSphereCenter, 
-                        const Eigen::Vector3d &B, double radius);
-    Sphere findCircumSphere3(size_t a, 
-                             size_t b, 
-                             size_t c);
-    Sphere findSphereThroughPoints(size_t a, 
-                                   size_t b,
-                                   size_t c);
-    Sphere findCircumSphere4(size_t a, 
-                             size_t b,
-                             size_t c, 
-                             size_t d);
-    bool findMaxDistance();  
-    void getSmallSpheres();
-    void getBigSpheres();
+    
+    void getTorii();
+    // functions required to get the torii and plane normals
+    Torus getTorus(const Sphere &s, size_t a, size_t b);
+    double getCosine(size_t a, size_t b);
     std::pair<SCHcone,SCHcone> getCones(size_t a, size_t b,
                                         const Eigen::Vector3d &n);
-    void getTorii();
-    Torus getTorus(const Sphere &s, size_t a, size_t b);
-    void removeUselessTorii();
+    Eigen::Vector3d getPlaneNormal(size_t a,size_t b,Eigen::Vector3d c);
+    
     void getVertexNeighbours();
+
     void getHeap();
     size_t findVertex(const BigSphere &bs, size_t a, size_t b);
-    double getCosine(size_t a, size_t b);
-    Eigen::Vector3d getPlaneNormal(size_t a,size_t b,Eigen::Vector3d c);
-    size_t getEdgeKey(size_t a, size_t b);
+    Sphere findCircumSphere4(size_t a, size_t b, size_t c, size_t d);
+    
+    // other functions
+    void removeUselessTorii();
     bool checkPointsInSphere(const Sphere &s);
+    bool getDerivative(const SphereCenter &currentSphereCenter, 
+                        const Eigen::Vector3d &B, double radius);
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
@@ -214,6 +219,7 @@ namespace sch
     std::vector<std::pair<size_t,Torus>> _torii;
     std::map<size_t,std::pair<SCHcone,SCHcone>> _toriiCones;
     std::map<size_t,std::pair<SCHplane,SCHplane>> _toriiPlanes;
+    std::map<size_t,size_t> _removeTorii;
 
     std::map<double,size_t,std::greater<double>> _heap;
   }; //class SchCreator3D

@@ -7,7 +7,7 @@ SchCreator3D::SchCreator3D(double r, double R)
   _r = r;
   _R = R;
   _alpha = R - r;
-  _epsilon = 1e-5;
+  _epsilon = 1e-8;
 } // SchCreator3D
 
 /*
@@ -108,7 +108,9 @@ void SchCreator3D::getBigSpheres()
   std::cout << "Finding big spheres...";
   Sphere s;
   BigSphere bs;
-  size_t currTriangle = 0;
+  size_t currTriangle = 0, index = _smallSpheres.size(),
+         abID, bcID;
+  std::set<size_t> registeredTriangle;
   // bool inSphere = true;
 
   for(auto i = poly.triangles_.begin(); i != poly.triangles_.end(); i++)
@@ -117,25 +119,33 @@ void SchCreator3D::getBigSpheres()
     s = findCircumSphere3((*i).a, (*i).b, (*i).c);
     // add circum radius to heap
     _heap.insert(std::make_pair(s.radius, currTriangle));
-    // check if sphere is ccw
-    Eigen::Vector3d ab = _vertexes[(*i).b] - _vertexes[(*i).a], ac = _vertexes[(*i).c] - _vertexes[(*i).a];
-    if(ab.dot(ac) > 0)
+    // order sphere vertexes
+    abID = getKey((*i).a,(*i).b);
+    bcID = getKey((*i).b,(*i).c);
+    if((registeredTriangle.count(abID) || registeredTriangle.count(bcID)))
     {
       // get big sphere
       s = findSphereThroughPoints((*i).a, (*i).c, (*i).b);
       bs = BigSphere(s, (*i).a, (*i).c, (*i).b);
+      // std::cout << "In sphere: " << checkPointsInSphere(s) << std::endl;
     }
     else
     {
       // get big sphere
       s = findSphereThroughPoints((*i).a, (*i).b, (*i).c);
       bs = BigSphere(s, (*i).a, (*i).b, (*i).c);
+      // std::cout << "In sphere: " << checkPointsInSphere(s) << std::endl;
     }
+    // register triangle
+    registeredTriangle.insert(getKey(bs.p1,bs.p2));
+    // registeredTriangle.insert(getEdgeKey(bs.p1,bs.p3));
+    registeredTriangle.insert(getKey(bs.p2,bs.p3));
     // add to big sphere vector
     _bigSpheres.push_back(bs);
 
     // increase the current triangle index
     currTriangle++;
+    index++;
   }
   std::cout << " Done." << std::endl;
 } // SchCreator3D::getBigSpheres
@@ -201,11 +211,6 @@ SchCreator3D::Sphere SchCreator3D::findCircumSphere4(size_t a,
   double radius;
   // if(Tdet == 0 || isnan(Tdet)) radius = _epsilon;
   radius = 0.5 * sqrt(pow(D, 2) + pow(E, 2) + pow(F, 2) - 4 * G);
-  // std::cout << T << "\n\n" << M1 << "\n\n" << M2 << "\n\n" << M3 << "\n\n" << M4 << "\n\n";
-  // std::cout << "D = " << D << " E = " << E << " F = " << F << " G = " << G << std::endl;
-  // std::cout << "0.5 * sqrt(pow(D, 2) + pow(E, 2) + pow(F, 2) - 4 * G)" << std::endl;
-  // std::cout << 0.5 << " * sqrt(" << pow(D, 2) << " + " << pow(E, 2) << " + " << pow(F, 2) << " - " << 4 * G << ") " << std::endl;
-  // std::cout << 0.5 * sqrt(pow(D, 2) + pow(E, 2) + pow(F, 2) - 4 * G) << std::endl;
   return Sphere(Eigen::Vector3d(-D / 2, -E / 2, -F / 2), radius);
 } // findCircumSphere4
 
@@ -236,7 +241,7 @@ SchCreator3D::Sphere SchCreator3D::findSphereThroughPoints(size_t a, size_t b, s
 
   // get sphere and circle radius
   double circleRadius = circleCenter2D.norm();
-  double sphereRadius = _R;
+  double sphereRadius = _R-_r;
 
   // check that sphere's radius is larger than the circle's,
   // else, increase the sphere radius
@@ -247,6 +252,8 @@ SchCreator3D::Sphere SchCreator3D::findSphereThroughPoints(size_t a, size_t b, s
 
   // find the center of the sphere
   Eigen::Vector3d sphereCenter = circleCenter3D + distanceFromCenter * n;
+
+  // std::cout << sphereRadius << ' ' << sphereCenter[0] << ' ' << sphereCenter[1] << ' ' << sphereCenter[2] << std::endl;
 
   return Sphere(sphereCenter, sphereRadius);
 } // SchCreator3D::findSphereThroughPoints
@@ -317,8 +324,7 @@ void SchCreator3D::getTorii()
   {
     // get edge key
     id = getEdgeKey((*i).p1, (*i).p2);
-    // std::cout << "Vertex: " << (*i).p1 << ' ' << (*i).p2 << ' ';
-    // std::cout << "ID: "<< id << " Estado: " << !toriiKey.count(id) << std::endl;
+    
     // check if key has already been stored
     if(!toriiKey.count(id))
     {
@@ -329,7 +335,6 @@ void SchCreator3D::getTorii()
       _torii.push_back(std::make_pair(torusIndex, torus));
       // compute the cones
       _toriiCones.insert(std::make_pair(torusIndex, getCones((*i).p1, (*i).p2, torus.normal)));
-
       // increase the torus index
       torusIndex++;
     }
@@ -340,8 +345,6 @@ void SchCreator3D::getTorii()
 
     // get edge key
     id = getEdgeKey((*i).p2, (*i).p3);
-    // std::cout << "Vertex: " << (*i).p2 << ' ' << (*i).p3 << ' ';
-    // std::cout << "ID: "<< id << " Estado: " << !toriiKey.count(id) << std::endl;
 
     // check if key has already been stored
     if(!toriiKey.count(id))
@@ -364,7 +367,7 @@ void SchCreator3D::getTorii()
 
     // get edge key
     id = getEdgeKey((*i).p3, (*i).p1);
-    // std::cout << "Vertex: " << (*i).p3 << ' ' << (*i).p1 << ' ';
+    
     // std::cout << "ID: "<< id << " Estado: " << !toriiKey.count(id) << std::endl;
 
     // check if key has already been stored
@@ -390,7 +393,7 @@ void SchCreator3D::getTorii()
     index++;
   }
 
-  index = 0;
+  index = _smallSpheres.size();
   for(auto i = _bigSphereNormals.begin(); i != _bigSphereNormals.end(); i++)
   {
     // add all big sphere normals to the map:
@@ -425,6 +428,8 @@ void SchCreator3D::getTorii()
                                       std::make_pair((*it.first).second.first, 
                                                      (*it.first).second.second))));
   }
+
+  // removeUselessTorii();
 }
 
 /*
@@ -471,7 +476,7 @@ SchCreator3D::Torus SchCreator3D::getTorus(const Sphere & s, size_t a, size_t b)
 {
   Eigen::Vector3d center = (_vertexes[a] + _vertexes[b]) / 2;
   return Torus(center, (_vertexes[a] - _vertexes[b]).normalized(), 
-              (center - s.center).norm());
+              (center - s.center).norm()-1e-2);
 }
 
 /*
@@ -480,6 +485,14 @@ SchCreator3D::Torus SchCreator3D::getTorus(const Sphere & s, size_t a, size_t b)
 size_t SchCreator3D::getEdgeKey(size_t a, size_t b)
 {
   return ((a < b) ? (a * _numberOfVertexes + b) : (b * _numberOfVertexes + a));
+}
+
+/*
+ *   Finds a unique key/ID given two numbers.
+ */
+size_t SchCreator3D::getKey(size_t a, size_t b)
+{
+  return (a * _numberOfVertexes + b);
 }
 
 /*
@@ -522,6 +535,37 @@ void SchCreator3D::getVertexNeighbours()
   }
 } // getVertexNeighbours();
 
+void SchCreator3D::removeUselessTorii()
+{
+  double d;
+  std::vector<size_t> torusToRemove;
+  for(auto i = _toriiPlanes.begin(); i != _toriiPlanes.end(); i++)
+  {
+    d =(_bigSpheres[(*i).second.first.first-_smallSpheres.size()].s.center - 
+        _bigSpheres[(*i).second.second.first-_smallSpheres.size()].s.center).squaredNorm();
+    // std::cout << (*i).first << ' ' << d << std::endl;
+    if(d < 1e-5){
+      _removeTorii.insert(std::make_pair((*i).first,false));
+      torusToRemove.push_back((*i).first);
+    } 
+    else _removeTorii.insert(std::make_pair((*i).first,true));
+  }
+
+  SCHplane temp;
+  for(auto i = torusToRemove.begin(); i != torusToRemove.end(); i++)
+  {
+    _toriiCones.erase(*i);
+
+    std::cout << _toriiPlanes[*i].first.first << ' ' << _toriiPlanes[*i].second.first << ' ';
+    temp = _toriiPlanes[*i].first;
+    _toriiPlanes[*i].first = _toriiPlanes[*i].second;
+    _toriiPlanes[*i].second = temp;
+    std::cout << _toriiPlanes[*i].first.first << ' ' << _toriiPlanes[*i].second.first << std::endl;
+
+  }
+}
+
+
 void SchCreator3D::getHeap()
 {
   size_t a, b, c, d;
@@ -529,12 +573,14 @@ void SchCreator3D::getHeap()
   Sphere s;
   for(auto i = _torii.begin(); i != _torii.end(); i++)
   {
+    // get the four vertexes
     a = _toriiCones[(*i).first].first.first;
     b = _toriiCones[(*i).first].second.first;
-    c = findVertex(_bigSpheres[_toriiPlanes[(*i).first].first.first],a,b);
-    d = findVertex(_bigSpheres[_toriiPlanes[(*i).first].second.first],a,b);
-
+    c = findVertex(_bigSpheres[_toriiPlanes[(*i).first].first.first-_smallSpheres.size()],a,b);
+    d = findVertex(_bigSpheres[_toriiPlanes[(*i).first].second.first-_smallSpheres.size()],a,b);
+    // compute the circum sphere
     s = findCircumSphere4(a,b,c,d);
+    // insert circumradius to the heap
     _heap.insert(std::make_pair(s.radius,(*i).first));
   }
 
@@ -570,7 +616,7 @@ void SchCreator3D::writeToFile(const std::string & filename)
   // write data into a file
   std::ofstream os;
   os.open(filename.c_str());
-  os.precision(10);
+  os.precision(16);
   size_t index = 0;
 
   // radii used for computation on first line
@@ -603,7 +649,7 @@ void SchCreator3D::writeToFile(const std::string & filename)
   for(auto i = _bigSpheres.begin(); i != _bigSpheres.end(); i++)
   {
     // radius and center of big sphere
-    os << (*i).s.radius << ' ' << (*i).s.center[0] << ' ';
+    os << _R << ' ' << (*i).s.center[0] << ' ';
     os << (*i).s.center[1] << ' ' << (*i).s.center[2] << std::endl;
 
     // coordinates of the three points touching the sphere
@@ -634,6 +680,7 @@ void SchCreator3D::writeToFile(const std::string & filename)
   os << _torii.size() << std::endl;
   for(auto i = _torii.begin(); i != _torii.end(); i++)
   {
+    // remove torus boolean
     os << 1 << std::endl;
 
     // write torus' external radius, center and normal coordinates
@@ -678,17 +725,6 @@ void SchCreator3D::writeToFile(const std::string & filename)
 
   // close the file
   os.close();
-
-  os.open("testTriangles.txt");
-
-  os << poly.triangles_.size() << std::endl;
-  for(auto it = poly.triangles_.begin(); it != poly.triangles_.end(); it++)
-  {
-    os << (*it).a << ' ';
-    os << (*it).b << ' ';
-    os << (*it).c << std::endl;
-  }
-  os.close();
 }
 
 
@@ -718,16 +754,6 @@ void SchCreator3D::computeSCH(const std::string & filename)
   getTorii();
   getVertexNeighbours();
   getHeap();
-
-  // size_t index = 0;
-  // for(auto i = poly.triangles_.begin(); i != poly.triangles_.end(); i++)
-  // {
-  //   std::cout << index << std::endl;
-  //   std::cout << (*i).a << ' ' << _vertexes[(*i).a][0] << ' ' << _vertexes[(*i).a][1] << ' ' << _vertexes[(*i).a][2] << std::endl;
-  //   std::cout << (*i).b << ' ' << _vertexes[(*i).b][0] << ' ' << _vertexes[(*i).b][1] << ' ' << _vertexes[(*i).b][2] << std::endl;
-  //   std::cout << (*i).c << ' ' << _vertexes[(*i).c][0] << ' ' << _vertexes[(*i).c][1] << ' ' << _vertexes[(*i).c][2] << std::endl << std::endl;
-  //   index++;
-  // }
 
   std::map<double, size_t>::iterator it = _heap.begin();
   double maxHeap = (*it).first;
