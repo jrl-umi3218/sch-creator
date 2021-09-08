@@ -151,6 +151,9 @@ namespace sch
       Torus() {}
     };
 
+    typedef std::pair<Sphere,bool> SCHss;
+    typedef std::pair<BigSphere,bool> SCHbs;
+    typedef std::pair<Torus,bool> SCHt;
     typedef std::pair<size_t,Cone> SCHcone;
     typedef std::pair<size_t,Eigen::Vector3d> SCHplane;
 
@@ -211,17 +214,21 @@ namespace sch
     std::vector<Eigen::Vector3d> _vertexes;
     std::vector<std::map<size_t,Cone>> _vertexNeighbours;
 
-    std::vector<Sphere> _smallSpheres;
-    std::vector<BigSphere> _bigSpheres;
-    std::vector<Face> _bigSphereNormals;
+    std::vector<SCHss> _smallSpheres;
+    std::vector<SCHbs> _bigSpheres;
+    std::map<size_t,Face> _bigSphereNormals;
 
     std::map<size_t,size_t> toriiKey;
-    std::vector<std::pair<size_t,Torus>> _torii;
+    std::vector<SCHt> _torii;
     std::map<size_t,std::pair<SCHcone,SCHcone>> _toriiCones;
     std::map<size_t,std::pair<SCHplane,SCHplane>> _toriiPlanes;
     std::map<size_t,size_t> _removeTorii;
 
     std::map<double,size_t,std::greater<double>> _heap;
+
+    std::vector<std::pair<Eigen::Vector3d,
+                          std::map<size_t,Cone>>> _SCHss;
+    
   }; //class SchCreator3D
 
 } // namespace sch
