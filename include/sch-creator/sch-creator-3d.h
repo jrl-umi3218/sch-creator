@@ -11,6 +11,7 @@
 #include <Eigen/Dense>
 #include <fstream>
 #include <iostream>
+#include <queue>
 #include <iomanip>
 // #include <math.h>
 // #include <memory>
@@ -151,17 +152,99 @@ namespace sch
       Torus() {}
     };
 
+    struct SCHvertex
+    {
+      bool inHull = true;
+      Eigen::Vector3d vertex;
+      std::vector<size_t> neighbours;
+
+      SCHvertex(const Eigen::Vector3d &v,const std::vector<size_t> &n)
+      {
+        vertex = v;
+        neighbours = n;
+      }
+
+      void removeFromHull()
+      {
+        inHull = false;
+      }
+    };
+
+    struct SCHedge
+    {
+      bool inHull = true;
+      size_t vertex1, vertex2, face1, face2;
+
+      SCHedge(size_t p1,size_t p2,size_t f1, size_t f2)
+      {
+        vertex1 = p1;
+        vertex2 = p2;
+        face1 = f1;
+        face2 = f2;
+      }
+
+      void removeFromHull()
+      {
+        inHull = false;
+      }
+    };
+
+    struct SCHtriangle
+    {
+      bool inHull = true;
+      size_t p1,p2,p3;
+      size_t e1,e2,e3;
+
+      SCHtriangle(size_t a,size_t b,size_t c,size_t d,size_t e,size_t f)
+      {
+        p1 = a;
+        p2 = b;
+        p3 = c;
+        e1 = d;
+        e2 = e;
+        e3 = f;
+      }
+
+      void removeFromHull()
+      {
+        inHull = false;
+      }
+    };
+
+    enum type {edge,triangle};
+
+    struct SCHheap
+    {
+      double radius;
+      type t;
+      size_t index;
+
+      SCHheap(double r, type e, size_t i)
+      {
+        radius = r;
+        t = e;
+        index = i;
+      }
+      
+      bool operator<(const SCHheap &h) const {
+        return (radius < h.radius);
+      }
+    };
+
     typedef std::pair<Sphere,bool> SCHss;
     typedef std::pair<BigSphere,bool> SCHbs;
     typedef std::pair<Torus,bool> SCHt;
     typedef std::pair<size_t,Cone> SCHcone;
     typedef std::pair<size_t,Eigen::Vector3d> SCHplane;
+    typedef std::pair<size_t,size_t> SCHneighbours;
 
   public:
     SchCreator3D(double r, double R);
     
   private:
-    bool findMaxDistance();  
+    bool findMaxDistance(); 
+
+    void initialize(); 
 
     void getSmallSpheres();
 
@@ -174,12 +257,22 @@ namespace sch
     // functions required to get the big spheres
     Sphere findCircumSphere3(size_t a, size_t b, size_t c);
     Sphere findSphereThroughPoints(size_t a, size_t b,
-                                   size_t c);                         
+                                   size_t c);  
+    Sphere findSphereThroughPoints(size_t a, SchCreator3D::Plane p,
+                                   Eigen::Vector2d circleCenter2D);                         
+    Sphere findSphereThroughPoints(size_t a, SchCreator3D::Plane p,
+                                   Eigen::Vector2d circleCenter2D,
+                                   double R);                         
+    
     Plane findPlaneBase(size_t a, size_t b, size_t c);
     Eigen::Vector2d findCircleThroughPoints(
                         const Eigen::Vector2d &a, 
                         const Eigen::Vector2d &b,
                         const Eigen::Vector2d &c);
+    Eigen::Vector2d findCircleThroughPoints(size_t a,
+                                            size_t b,
+                                            size_t c,
+                                            SchCreator3D::Plane p);
     
     void getTorii();
     // functions required to get the torii and plane normals
@@ -192,14 +285,33 @@ namespace sch
     void getVertexNeighbours();
 
     void getHeap();
-    size_t findVertex(const BigSphere &bs, size_t a, size_t b);
+    double getEdgeHeap(const SCHedge &e);
+    size_t findVertex(size_t f, size_t a, size_t b);
+    size_t findVertex(const SCHtriangle &t,size_t a,size_t b);
+
     Sphere findCircumSphere4(size_t a, size_t b, size_t c, size_t d);
     
     // other functions
-    void removeUselessTorii();
+    void changeTopology();
+    void printEdges();
+    void printVertexes();
+    void printTriangles();
+    void printHeap();
+    void updateNeighbours(SCHneighbours e, size_t index);
+    void updateNeighbours(size_t e, size_t index);
+    void updateNeighbours(size_t oldE, size_t f, size_t e);
+    SCHneighbours findEdge(size_t v1, size_t v2, size_t v3);
+    size_t findEdge(size_t v1, size_t v2);
+    bool checkSameNeighbour(size_t v1, size_t v2, type t);
+    void dissapearVertex(size_t v1, size_t v2, size_t v3 , size_t v4, 
+                         SCHneighbours e12,SCHneighbours e34, size_t e);
+    void invertEdge(size_t v3, size_t v4, SCHneighbours e12, SCHneighbours e34);
     bool checkPointsInSphere(const Sphere &s);
-    bool getDerivative(const SphereCenter &currentSphereCenter, 
-                        const Eigen::Vector3d &B, double radius);
+    bool getDerivative(size_t v1, size_t v2, size_t v3, size_t v4);
+    void updateVertexesIndex();
+    void substituteByVertex();
+    size_t findActiveNeighbours(size_t v);
+
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
@@ -208,26 +320,36 @@ namespace sch
     Polyhedron_algorithms poly = Polyhedron_algorithms();
 
   private:
-    double _r, _R, _alpha, _epsilon;
+    double _r, _R, _alpha, _desiredAlpha, _epsilon;
+
+    std::vector<SCHvertex> _SCHvertexes;
+    std::vector<SCHedge> _SCHedges;
+    std::vector<SCHtriangle> _SCHtriangles;
+    std::map<size_t,size_t> toriiKeys;
 
     size_t _numberOfVertexes;
     std::vector<Eigen::Vector3d> _vertexes;
-    std::vector<std::map<size_t,Cone>> _vertexNeighbours;
+    std::vector<std::vector<SCHcone>> _vertexNeighbours;
 
-    std::vector<SCHss> _smallSpheres;
-    std::vector<SCHbs> _bigSpheres;
+    std::vector<Sphere> _smallSpheres;
+    std::vector<BigSphere> _bigSpheres;
     std::map<size_t,Face> _bigSphereNormals;
 
     std::map<size_t,size_t> toriiKey;
-    std::vector<SCHt> _torii;
+    std::vector<Torus> _torii;
     std::map<size_t,std::pair<SCHcone,SCHcone>> _toriiCones;
     std::map<size_t,std::pair<SCHplane,SCHplane>> _toriiPlanes;
-    std::map<size_t,size_t> _removeTorii;
 
-    std::map<double,size_t,std::greater<double>> _heap;
+    std::priority_queue<SCHheap> _heap;
+    std::vector<SCHheap> temp;
+    std::set<size_t,std::less<size_t>> difference;
+    std::vector<size_t> finalIndexes;
+
+    Eigen::Vector3d initialCenter;
 
     std::vector<std::pair<Eigen::Vector3d,
                           std::map<size_t,Cone>>> _SCHss;
+    std::vector<size_t> v;
     
   }; //class SchCreator3D
 

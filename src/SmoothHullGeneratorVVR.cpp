@@ -1141,18 +1141,6 @@ void SmoothHullGeneratorVVR::computeVVR_Prime(const std::string & filename)
     os << tVVR[it->first].second.second.second.z << std::endl;
     }*/
   os.close();
-
-  os.open("stpbvTriangles.txt");
-  i = 0;
-  os << bigSpheres.size() << std::endl;
-  for(auto it = bigSpheres.begin(); it != bigSpheres.end(); it++)
-  {
-    os << _spheres[i]._point1 << ' ';
-    os << _spheres[i]._point2 << ' ';
-    os << _spheres[i]._point3 << std::endl;
-    i++;
-  }
-  os.close();
 }
 
 void SmoothHullGeneratorVVR::computeVVR(const std::string & filename)
