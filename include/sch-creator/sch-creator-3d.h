@@ -13,14 +13,15 @@
 #include <iostream>
 #include <queue>
 #include <iomanip>
-// #include <math.h>
 // #include <memory>
 #include <string>
 #include <vector>
 #include <map>
+#include <stdlib.h>
 #include <sch/S_Polyhedron/Polyhedron_algorithms.h>
 #include <boost/program_options.hpp>
-
+#include <math.h>
+#define PI 3.14159265
 
 /*! \namespace sch
  *  \brief Strictly Convex Hull Namespace
@@ -300,6 +301,7 @@ namespace sch
     void updateNeighbours(SCHneighbours e, size_t index);
     void updateNeighbours(size_t e, size_t index);
     void updateNeighbours(size_t oldE, size_t f, size_t e);
+    void addToVertexNeighbours(size_t e);
     SCHneighbours findEdge(size_t v1, size_t v2, size_t v3);
     size_t findEdge(size_t v1, size_t v2);
     bool checkSameNeighbour(size_t v1, size_t v2, type t);
@@ -310,8 +312,14 @@ namespace sch
     bool getDerivative(size_t v1, size_t v2, size_t v3, size_t v4);
     void updateVertexesIndex();
     void substituteByVertex();
+    void removeNeighboursFromHull(size_t v);
     size_t findActiveNeighbours(size_t v);
-
+    bool checkHeap();
+    double addNoise();
+    bool torusOnSphereCheck(size_t a, size_t b, const Eigen::Vector3d &C1, 
+                            const Eigen::Vector3d &C2);
+    bool checkOrientation(size_t a, size_t b, size_t c);
+    double angleBetween(Eigen::Vector3d a, Eigen::Vector3d b);
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
@@ -321,6 +329,7 @@ namespace sch
 
   private:
     double _r, _R, _alpha, _desiredAlpha, _epsilon;
+    double noise = 100, maxBodyDistance = 0;
 
     std::vector<SCHvertex> _SCHvertexes;
     std::vector<SCHedge> _SCHedges;
@@ -341,14 +350,11 @@ namespace sch
     std::map<size_t,std::pair<SCHplane,SCHplane>> _toriiPlanes;
 
     std::priority_queue<SCHheap> _heap;
-    std::vector<SCHheap> temp;
+    // std::vector<SCHheap> temp;
     std::set<size_t,std::less<size_t>> difference;
     std::vector<size_t> finalIndexes;
 
     Eigen::Vector3d initialCenter;
-
-    std::vector<std::pair<Eigen::Vector3d,
-                          std::map<size_t,Cone>>> _SCHss;
     std::vector<size_t> v;
     
   }; //class SchCreator3D
