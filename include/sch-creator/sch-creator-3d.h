@@ -320,6 +320,9 @@ namespace sch
                             const Eigen::Vector3d &C2);
     bool checkOrientation(size_t a, size_t b, size_t c);
     double angleBetween(Eigen::Vector3d a, Eigen::Vector3d b);
+    void checkNewHeap(double newHeap);
+    void orderTriangle(size_t a, size_t &b, size_t &c);
+    void swap(size_t &a, size_t &b);
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
