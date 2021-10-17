@@ -293,7 +293,7 @@ namespace sch
     Sphere findCircumSphere4(size_t a, size_t b, size_t c, size_t d);
     
     // other functions
-    void changeTopology();
+    void changeTopology(SCHheap heap);
     void printEdges();
     void printVertexes();
     void printTriangles();
@@ -302,13 +302,16 @@ namespace sch
     void updateNeighbours(size_t e, size_t index);
     void updateNeighbours(size_t oldE, size_t f, size_t e);
     void addToVertexNeighbours(size_t e);
-    SCHneighbours findEdge(size_t v1, size_t v2, size_t v3);
+    SCHneighbours findEdge(size_t e, size_t v1, size_t v2, size_t v3);
     size_t findEdge(size_t v1, size_t v2);
     bool checkSameNeighbour(size_t v1, size_t v2, type t);
-    void dissapearVertex(size_t v1, size_t v2, size_t v3 , size_t v4, 
+    bool checkSameNeighbour(size_t e1, size_t e2, size_t f1);
+    void dissapearVertex(SCHheap heap, size_t v1, size_t v2, size_t v3 , size_t v4, 
                          SCHneighbours e12,SCHneighbours e34, size_t e);
-    void invertEdge(size_t v3, size_t v4, SCHneighbours e12, SCHneighbours e34);
+    void invertEdge(SCHheap heap, size_t v1, size_t v2, size_t v3, size_t v4,
+                    SCHneighbours e12, SCHneighbours e34);
     bool checkPointsInSphere(const Sphere &s);
+    bool checkPointsInSphere(size_t a, size_t b, size_t c, size_t d);
     bool getDerivative(size_t v1, size_t v2, size_t v3, size_t v4);
     void updateVertexesIndex();
     void substituteByVertex();
@@ -323,6 +326,8 @@ namespace sch
     void checkNewHeap(double newHeap);
     void orderTriangle(size_t a, size_t &b, size_t &c);
     void swap(size_t &a, size_t &b);
+    bool checkLimitCase(size_t a, size_t b, size_t c, size_t d, double r);
+
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
@@ -334,6 +339,8 @@ namespace sch
     double _r, _R, _alpha, _desiredAlpha, _epsilon;
     double noise = 100, maxBodyDistance = 0;
 
+    double _activeVertexes;
+    bool _limitCase = false;
     std::vector<SCHvertex> _SCHvertexes;
     std::vector<SCHedge> _SCHedges;
     std::vector<SCHtriangle> _SCHtriangles;
