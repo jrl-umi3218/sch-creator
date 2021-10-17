@@ -1075,47 +1075,16 @@ void SchCreator3D::dissapearVertex(SCHheap heap, size_t v1, size_t v2, size_t v3
   _heap.push(SCHheap(ccradius,type(triangle),newT));
   // temp.push_back(SCHheap(findCircumSphere3(v2,v3,v4).radius,type(triangle),newT));
 
-  // insert edge to heap, update edge and remove old edge from hull
+  // insert edge to heap, update edge
   std::cout << "New edges: " << std::endl;
-  SCHedge newEdge = _SCHedges[e34.first];
-  _SCHedges.push_back(newEdge);
-  addToVertexNeighbours(index);
-  updateNeighbours(e34.first,newT,index);
+  makeNewEdge(_SCHedges[e34.first],e34.first,index,newT,heap.radius);
+  makeNewEdge(_SCHedges[e],e,index+1,newT,heap.radius);
+  makeNewEdge(_SCHedges[e34.second],e34.second,index+2,newT,heap.radius);
+
+  // remove old edges from hull
   _SCHedges[e34.first].removeFromHull();
-  std::cout << index << ' ';
-  ccradius = getEdgeHeap(newEdge);
-  if(ccradius < heap.radius)
-    _heap.push(SCHheap(ccradius,type(edge),index));
-  else 
-    std::cout << "New heap is larger than current max heap" << std::endl;
-
-  newEdge = _SCHedges[e];
-  _SCHedges.push_back(newEdge);
-  addToVertexNeighbours(index+1);
-  updateNeighbours(e,newT,index+1);
   _SCHedges[e].removeFromHull();
-  std::cout << index+1 << ' ';
-  ccradius = getEdgeHeap(newEdge);
-  if(ccradius < heap.radius)
-    _heap.push(SCHheap(ccradius,type(edge),index+1));
-  else 
-    std::cout << "New heap is larger than current max heap" << std::endl;
-
-  newEdge = _SCHedges[e34.second];
-  _SCHedges.push_back(newEdge);
-  addToVertexNeighbours(index+2);
-  updateNeighbours(e34.second,newT,index+2);
   _SCHedges[e34.second].removeFromHull();
-  std::cout << index+2 << ' ';
-  ccradius = getEdgeHeap(newEdge);
-  if(ccradius < heap.radius)
-    _heap.push(SCHheap(ccradius,type(edge),index+2));
-  else 
-    std::cout << "New heap is larger than current max heap" << std::endl;
-  
-  // temp.push_back(SCHheap(getEdgeHeap(_SCHedges[e34.first]),type(edge),e34.first));
-  // temp.push_back(SCHheap(getEdgeHeap(_SCHedges[e]),type(edge),e));
-  // temp.push_back(SCHheap(getEdgeHeap(_SCHedges[e34.second]),type(edge),e34.second));
   
   _activeVertexes--;
 } // dissapearVertex
@@ -1166,7 +1135,6 @@ void SchCreator3D::invertEdge(SCHheap heap, size_t v1, size_t v2, size_t v3, siz
 
   // add the new edge
   size_t index = _SCHtriangles.size();
-  SCHedge e = SCHedge(v3,v4,index,index+1);
   _SCHedges.push_back(SCHedge(v3,v4,index,index+1));
   addToVertexNeighbours(_SCHedges.size()-1);
   
@@ -1177,23 +1145,6 @@ void SchCreator3D::invertEdge(SCHheap heap, size_t v1, size_t v2, size_t v3, siz
 
   // get the new triangles
   index = _SCHedges.size()-1;
-  // if(checkOrientation(_SCHedges[heap.index].vertex1,v3, v4))
-  //   _SCHtriangles.push_back(SCHtriangle(_SCHedges[heap.index].vertex1,
-  //                                       v4, v3,index+1,index,index+2));
-  // else 
-  //   _SCHtriangles.push_back(SCHtriangle(_SCHedges[heap.index].vertex1,
-  //                                       v3, v4,index+1,index,index+2));
-  // if(checkOrientation(_SCHedges[heap.index].vertex2,v3, v4))
-  //   _SCHtriangles.push_back(SCHtriangle(_SCHedges[heap.index].vertex2,
-  //                                       v4, v3,index+4,index,index+3));
-  // else
-  //   _SCHtriangles.push_back(SCHtriangle(_SCHedges[heap.index].vertex2,
-  //                                       v3, v4,index+3,index,index+4));
-  // // size_t a = v3, b = v4;
-  // std::cout << "checking order ";
-  // std::cout << _SCHedges[heap.index].vertex1 << ' ' <<  _SCHedges[heap.index].vertex2 << ' '
-  //           << v3 << ' ' << v4 << std::endl;
-  // orderTriangle(_SCHedges[heap.index].vertex1,v4,v3);
 
   std::cout << "New triangles: " << std::endl;
   std::cout << _SCHtriangles.size() << ' ' << _SCHedges[heap.index].vertex2
@@ -1217,53 +1168,12 @@ void SchCreator3D::invertEdge(SCHheap heap, size_t v1, size_t v2, size_t v3, siz
   _heap.push(SCHheap(findCircumSphere3(_SCHedges[heap.index].vertex2,
                                       v3, v4).radius,type(triangle),_SCHtriangles.size()-2));
                                       
-  double max = heap.radius, ccradius;
-  
   // add edges to the hull and heap again
   std::cout << "New edges: " << std::endl;
-  e = _SCHedges[e12.first];
-  _SCHedges.push_back(e);
-  updateNeighbours(e12.first,_SCHtriangles.size()-1,_SCHedges.size()-1);
-  std::cout << _SCHedges.size()-1 << ' ';
-  ccradius = getEdgeHeap(e);
-  _heap.push(SCHheap(ccradius,type(edge),_SCHedges.size()-1));
-  // temp.push_back(SCHheap(getEdgeHeap(e),type(edge),_SCHedges.size()-1));
-  addToVertexNeighbours(_SCHedges.size()-1);
-  if(ccradius > max)
-    max = ccradius;
-
-  e = _SCHedges[e12.second];
-  _SCHedges.push_back(e);
-  updateNeighbours(e12.second,_SCHtriangles.size()-1,_SCHedges.size()-1);
-  std::cout << _SCHedges.size()-1 << ' ';
-  ccradius = getEdgeHeap(e);
-  _heap.push(SCHheap(ccradius,type(edge),_SCHedges.size()-1));
-  // temp.push_back(SCHheap(getEdgeHeap(e),type(edge),_SCHedges.size()-1));
-  addToVertexNeighbours(_SCHedges.size()-1);
-  if(ccradius > max)
-    max = ccradius;
-
-  e = _SCHedges[e34.first];
-  _SCHedges.push_back(e);
-  updateNeighbours(e34.first,_SCHtriangles.size()-2,_SCHedges.size()-1);
-  std::cout << _SCHedges.size()-1 << ' ';
-  ccradius = getEdgeHeap(e);
-  _heap.push(SCHheap(ccradius,type(edge),_SCHedges.size()-1));
-  // temp.push_back(SCHheap(getEdgeHeap(e),type(edge),_SCHedges.size()-1));
-  addToVertexNeighbours(_SCHedges.size()-1);
-  if(ccradius > max)
-    max = ccradius;
-
-  e = _SCHedges[e34.second];
-  _SCHedges.push_back(e);
-  updateNeighbours(e34.second,_SCHtriangles.size()-2,_SCHedges.size()-1);
-  std::cout << _SCHedges.size()-1 << ' ';
-  ccradius = getEdgeHeap(e);
-  _heap.push(SCHheap(ccradius,type(edge),_SCHedges.size()-1));
-  // temp.push_back(SCHheap(getEdgeHeap(e),type(edge),_SCHedges.size()-1));
-  addToVertexNeighbours(_SCHedges.size()-1);
-  if(ccradius > max)
-    max = ccradius;
+  makeNewEdge(_SCHedges[e12.first], e12.first,_SCHedges.size(),_SCHtriangles.size()-1,heap.radius);
+  makeNewEdge(_SCHedges[e12.second], e12.second,_SCHedges.size(),_SCHtriangles.size()-1,heap.radius);
+  makeNewEdge(_SCHedges[e34.first], e34.first,_SCHedges.size(),_SCHtriangles.size()-2,heap.radius);
+  makeNewEdge(_SCHedges[e34.second], e34.second,_SCHedges.size(),_SCHtriangles.size()-2,heap.radius);
 
   // remove edges from hull
   _SCHedges[e12.first].removeFromHull();
@@ -1271,11 +1181,24 @@ void SchCreator3D::invertEdge(SCHheap heap, size_t v1, size_t v2, size_t v3, siz
   _SCHedges[e34.first].removeFromHull();
   _SCHedges[e34.second].removeFromHull();
 
-  std::cout << "previous max heap: " << heap.radius << std::endl;
-  if(max == heap.radius)
-    max = _heap.top().radius;
-  std::cout << "new max heap: " << max << std::endl;
 } // invertEdge
+
+void SchCreator3D::makeNewEdge(const SchCreator3D::SCHedge &e, size_t prevE, size_t newE, size_t t, double maxHeap)
+{
+  double radius;
+
+  _SCHedges.push_back(e);
+  updateNeighbours(prevE,t,newE);
+  std::cout << newE << ' ';
+  radius = getEdgeHeap(e);
+  if(radius < maxHeap)
+    _heap.push(SCHheap(radius,type(edge),newE));
+  else 
+  {
+    std::cout << "New heap is larger than current max heap" << std::endl;
+  }
+  addToVertexNeighbours(newE);
+} // makeNewHeap
 
 void SchCreator3D::updateNeighbours(SchCreator3D::SCHneighbours e, size_t index)
 {
