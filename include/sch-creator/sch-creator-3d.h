@@ -327,7 +327,7 @@ namespace sch
     void orderTriangle(size_t a, size_t &b, size_t &c);
     void swap(size_t &a, size_t &b);
     bool checkLimitCase(size_t a, size_t b, size_t c, size_t d, double r);
-
+    void makeNewEdge(const SCHedge &e, size_t prevE, size_t newE, size_t t, double maxHeap);
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
