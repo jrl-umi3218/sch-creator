@@ -253,6 +253,7 @@ namespace sch
 
     // get key functions
     size_t getEdgeKey(size_t a, size_t b);
+    size_t getEdgeKey(size_t edge);
     size_t getKey(size_t a, size_t b);
 
     // functions required to get the big spheres
@@ -302,7 +303,9 @@ namespace sch
     void updateNeighbours(size_t e, size_t index);
     void updateNeighbours(size_t oldE, size_t f, size_t e);
     void addToVertexNeighbours(size_t e);
-    SCHneighbours findEdge(size_t e, size_t v1, size_t v2, size_t v3);
+    SCHneighbours findEdge(size_t f1, size_t f2, size_t v1, size_t v2, size_t v3);
+    void findEdges(size_t f, size_t a, size_t b, size_t e);
+
     size_t findEdge(size_t v1, size_t v2);
     bool checkSameNeighbour(size_t v1, size_t v2, type t);
     bool checkSameNeighbour(size_t e1, size_t e2, size_t f1);
@@ -314,7 +317,7 @@ namespace sch
     bool checkPointsInSphere(size_t a, size_t b, size_t c, size_t d);
     bool getDerivative(size_t v1, size_t v2, size_t v3, size_t v4);
     void updateVertexesIndex();
-    void substituteByVertex();
+    void dissapearUnderEdge(SCHheap heap);
     void removeNeighboursFromHull(size_t v);
     size_t findActiveNeighbours(size_t v);
     bool checkHeap();
@@ -328,6 +331,8 @@ namespace sch
     void swap(size_t &a, size_t &b);
     bool checkLimitCase(size_t a, size_t b, size_t c, size_t d, double r);
     void makeNewEdge(const SCHedge &e, size_t prevE, size_t newE, size_t t, double maxHeap);
+    size_t findVertex(size_t e1, size_t e2);
+    size_t findEdge(size_t f, size_t e1, size_t e2);
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
@@ -339,8 +344,7 @@ namespace sch
     double _r, _R, _alpha, _desiredAlpha, _epsilon;
     double noise = 100, maxBodyDistance = 0;
 
-    double _activeVertexes;
-    bool _limitCase = false;
+    size_t _activeVertexes;
     std::vector<SCHvertex> _SCHvertexes;
     std::vector<SCHedge> _SCHedges;
     std::vector<SCHtriangle> _SCHtriangles;
