@@ -260,9 +260,9 @@ namespace sch
     Sphere findCircumSphere3(size_t a, size_t b, size_t c);
     Sphere findSphereThroughPoints(size_t a, size_t b,
                                    size_t c);  
-    Sphere findSphereThroughPoints(size_t a, Plane p,
+    Sphere findSphereThroughPoints(size_t a, SchCreator3D::Plane p,
                                    Eigen::Vector2d circleCenter2D);                         
-    Sphere findSphereThroughPoints(size_t a, Plane p,
+    Sphere findSphereThroughPoints(size_t a, SchCreator3D::Plane p,
                                    Eigen::Vector2d circleCenter2D,
                                    double R);                         
     Sphere findSphereThroughPoints(const SCHtriangle &t);
@@ -326,7 +326,8 @@ namespace sch
     size_t findActiveNeighbours(size_t v);
     bool checkHeap();
     double addNoise();
-    bool torusThicknessCheck(size_t v1, size_t v2, size_t f1, size_t f2);
+    bool torusOnSphereCheck(size_t a, size_t b, const Eigen::Vector3d &C1, 
+                            const Eigen::Vector3d &C2);
     bool checkOrientation(size_t a, size_t b, size_t c);
     double angleBetween(Eigen::Vector3d a, Eigen::Vector3d b);
     void checkNewHeap(double newHeap);
