@@ -338,6 +338,7 @@ namespace sch
     size_t findVertex(size_t e1, size_t e2);
     size_t findEdge(size_t f, size_t e1, size_t e2);
     void removeTriangle(size_t t);
+    bool torusThicknessCheck(size_t v1, size_t v2, size_t f1, size_t f2);
     bool checkToruses(size_t e, size_t e1, size_t e2);
   public:
     void computeSCH(const std::string &filename);
