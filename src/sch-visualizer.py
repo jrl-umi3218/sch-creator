@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from numpy.core.defchararray import add, index
 from numpy.lib.function_base import angle, extract, flip
 from numpy.lib.scimath import arccos
@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import math
 from matplotlib.widgets import Slider
-import numpy as np
 from numpy import linalg as LA
 
 ########## functions ##########
