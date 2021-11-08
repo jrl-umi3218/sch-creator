@@ -268,11 +268,16 @@ void SchCreator3D::initialize()
 void SchCreator3D::getSmallSpheres()
 {
   std::cout << "Finding small spheres... ";
+  size_t  index = 0;
   for(auto i = _SCHvertexes.begin(); i != _SCHvertexes.end(); i++)
   {
     if((*i).inHull)
+    {
       // get small spheres
       _smallSpheres.push_back(Sphere((*i).vertex,_r));
+      i->ssIndex = index;
+      index++;
+    }
   }
   std::cout << _smallSpheres.size() << ' ';
   std::cout << "Done." << std::endl;
@@ -344,18 +349,10 @@ void SchCreator3D::getBigSpheres()
     s = findSphereThroughPoints((*i).p1, (*i).p2, (*i).p3);
     bs = BigSphere(s,v[(*i).p1],v[(*i).p2],v[(*i).p3]);
 
-    // std::cout << "Check direction: ";
-    // if(checkPointsInSphere(s))
-    //   std::cout << "1" << std::endl;
-    // else
-    // {
-    //   s = findSphereThroughPoints((*i).p1, (*i).p3, (*i).p2);
-    //   checkPointsInSphere(s);
-    // }
-
     // std::cout << "-------------------" << std::endl;
     // add to big sphere vector
     _bigSpheres.push_back(bs);
+    i->bsIndex = index;
 
     // increase the current triangle index
     index++;
@@ -600,8 +597,8 @@ Eigen::Vector2d SchCreator3D::findCircleThroughPoints(size_t a,
  */
 void SchCreator3D::getTorii()
 {
-  std::cout << "Finding torii..." << std::endl;
-  size_t id, torusIndex = _smallSpheres.size() + _bigSpheres.size(),
+  std::cout << "Finding torii...";
+  size_t torusIndex = _smallSpheres.size() + _bigSpheres.size(),
          index = _smallSpheres.size();
   std::multimap<size_t, SCHplane> orderedPlanes;
   Eigen::Vector3d planeNormal;
@@ -610,80 +607,50 @@ void SchCreator3D::getTorii()
   SCHplane plane;
 
   // go through all edges
-  for(auto i = _bigSpheres.begin(); i != _bigSpheres.end(); i++)
+  for(auto i = _SCHedges.begin(); i != _SCHedges.end(); i++)
   {
-    // std::cout << (*i).p1 << ' ' << (*i).p2 << ' ' << (*i).p3 << std::endl;
-    // get edge key
-    id = getEdgeKey((*i).p1, (*i).p2);
-
-    // check if key has already been stored
-    if(!toriiKey.count(id))
+    // check if the edge is part of the hull
+    if(i->inHull)
     {
-      // store torus index with its key
-      toriiKey.insert(std::make_pair(id, torusIndex));
-      // add torus to the vector
-      torus = getTorus((*i).s, (*i).p1, (*i).p2);
+      // get the torus
+      torus = getTorus(_bigSpheres[_SCHtriangles[i->face1].bsIndex].s,_SCHvertexes[i->vertex1].ssIndex,_SCHvertexes[i->vertex2].ssIndex);
+      // add torus to _torii
       _torii.push_back(torus);
-      // compute the cones
-      _toriiCones.insert(std::make_pair(torusIndex,getCones((*i).p1,(*i).p2,torus.normal)));
-      // increase the torus index
+      // get torus cones                torusIndex, pair(SCHcone,SCHcone)
+      _toriiCones.insert(std::make_pair(torusIndex,getCones(_SCHvertexes[i->vertex1].ssIndex,_SCHvertexes[i->vertex2].ssIndex,torus.normal)));
+      // set edge.torusIndex to torusIndex
+      i->torusIndex = torusIndex;
+
       torusIndex++;
     }
+  }
 
-    // get the plane normal
-    planeNormal = getPlaneNormal((*i).p1, (*i).p2, (*i).s.center);
-    face.plane1 = std::make_pair(toriiKey[id], planeNormal);
-
-    // get edge key
-    id = getEdgeKey((*i).p2, (*i).p3);
-
-    // check if key has already been stored
-    if(!toriiKey.count(id))
+  for(auto i = _SCHtriangles.begin(); i != _SCHtriangles.end(); i++)
+  {
+    if(i->inHull)
     {
+      // get the torus index
+      torusIndex = _SCHedges[i->e1].torusIndex;
 
-      // store torus index with its key
-      toriiKey.insert(std::make_pair(id, torusIndex));
-      // add torus to the vector
-      torus = getTorus((*i).s, (*i).p2, (*i).p3);
-      // std::cout << torusIndex << '\t' << (*i).p2 << '\t' << (*i).p3 << std::endl;
-      _torii.push_back(torus);
-      // compute the cones
-      _toriiCones.insert(std::make_pair(torusIndex,getCones((*i).p2,(*i).p3, torus.normal)));
-      // increase the torus index
-      torusIndex++;
+      // get the first plane normal
+      planeNormal = getPlaneNormal(_SCHvertexes[(*i).p1].ssIndex, _SCHvertexes[(*i).p2].ssIndex, _bigSpheres[i->bsIndex].s.center);
+      face.plane1 = std::make_pair(torusIndex, planeNormal);
+
+      torusIndex = _SCHedges[i->e2].torusIndex;
+
+      // get the second plane normal
+      planeNormal = getPlaneNormal(_SCHvertexes[(*i).p2].ssIndex, _SCHvertexes[(*i).p3].ssIndex, _bigSpheres[i->bsIndex].s.center);
+      face.plane2 = std::make_pair(torusIndex, planeNormal);
+
+      torusIndex = _SCHedges[i->e3].torusIndex;
+
+      // get the third plane normal
+      planeNormal = getPlaneNormal(_SCHvertexes[(*i).p3].ssIndex, _SCHvertexes[(*i).p1].ssIndex, _bigSpheres[i->bsIndex].s.center);
+      face.plane3 = std::make_pair(torusIndex, planeNormal);
+
+      // add face to sphere normals
+      _bigSphereNormals.insert(std::make_pair(i->bsIndex,face));
     }
-
-    // get the plane normal
-    planeNormal = getPlaneNormal((*i).p2, (*i).p3, (*i).s.center);
-    face.plane2 = std::make_pair(toriiKey[id], planeNormal);
-
-    // get edge key
-    id = getEdgeKey((*i).p3, (*i).p1);
-
-    // std::cout << "ID: "<< id << " Estado: " << !toriiKey.count(id) << std::endl;
-
-    // check if key has already been stored
-    if(!toriiKey.count(id))
-    {
-      // store torus index with its key
-      toriiKey.insert(std::make_pair(id, torusIndex));
-      // add torus to the vector
-      torus = getTorus((*i).s, (*i).p3, (*i).p1);
-      // std::cout << torusIndex << '\t' << (*i).p3 << '\t' << (*i).p1 << std::endl;
-      _torii.push_back(torus);
-      // compute the cones
-      _toriiCones.insert(std::make_pair(torusIndex,getCones((*i).p3,(*i).p1,torus.normal)));
-      // increase the torus index
-      torusIndex++;
-    }
-
-    // get the plane normal
-    planeNormal = getPlaneNormal((*i).p3, (*i).p1, (*i).s.center);
-    face.plane3 = std::make_pair(toriiKey[id], planeNormal);
-
-    // add face to sphere normals
-    _bigSphereNormals.insert(std::make_pair(index,face));
-    index++;
   }
 
   index = _smallSpheres.size();
@@ -704,35 +671,23 @@ void SchCreator3D::getTorii()
     index++;
   }
 
-  for(auto i = toriiKey.begin(); i != toriiKey.end(); i++)
+  index = _smallSpheres.size() + _bigSpheres.size();
+  for(auto i = _toriiCones.begin(); i != _toriiCones.end(); i++)
   {
-    // get the iterator pointing to the first SCHplane
-    auto it = orderedPlanes.equal_range((*i).second);
-    // store plane
-    plane = std::make_pair((*it.first).second.first,(*it.first).second.second);
-    // advance the iterator
+    // get the iterator pointing to planes of torus i->first
+    auto it = orderedPlanes.equal_range(i->first);
+
+    // get the plane normal of the first plane
+    plane = (*it.first).second;
+    // advance the iterator to get second plane
     it.first++;
-    // add elements to the map
-    _toriiPlanes.insert(
-        std::make_pair((*it.first).first,
-                       // first plane
-                       std::make_pair(plane,
-                                      // second plane
-                                      std::make_pair((*it.first).second.first,
-                                                     (*it.first).second.second))));
+    // insert to _toriiPlanes
+                                    // torus index
+    _toriiPlanes.insert(std::make_pair(i->first,
+         // first SCHplane, second SCHplane
+         std::make_pair(plane,(*it.first).second)));
   }
 
-  // std::cout << "Torii cones " << std::endl;
-  // for(auto i = _toriiCones.begin(); i != _toriiCones.end(); i++)
-  //   std::cout << (*i).first << ' ' << (*i).second.first.first << ' ' << (*i).second.second.first << std::endl;
-  
-  // std::cout << "Sphere normals " << std::endl;
-  // for(auto i = _bigSphereNormals.begin(); i != _bigSphereNormals.end(); i++)
-  // {
-  //   std::cout << (*i).first << ' ' << (*i).second.plane1.first << ' '
-  //             << (*i).second.plane2.first << ' '
-  //             << (*i).second.plane3.first << std::endl;
-  // }
   std::cout << " Done." << std::endl;
 } // getTorii
 
@@ -781,9 +736,9 @@ Eigen::Vector3d SchCreator3D::getPlaneNormal(size_t a, size_t b, size_t f)
   // find the normal to the plane
   Eigen::Vector3d ca = _vertexes[a] - c, 
                   cb = _vertexes[b] - c;
-  std::cout << c.transpose() << "\n"
-            << ca.transpose() << "\n"
-            << cb.transpose() << "\n";
+  // std::cout << c.transpose() << "\n"
+  //           << ca.transpose() << "\n"
+  //           << cb.transpose() << "\n";
   return ca.cross(cb).normalized();
 }
 
@@ -827,7 +782,7 @@ size_t SchCreator3D::getKey(size_t a, size_t b)
 */
 void SchCreator3D::getVertexNeighbours()
 {
-  size_t id, index = 0;
+  size_t index = 0;
   Cone cone;
   std::multimap<size_t, size_t> orderedEdges;
   _vertexNeighbours.resize(_smallSpheres.size());
@@ -840,37 +795,26 @@ void SchCreator3D::getVertexNeighbours()
     if(!(*i).inHull) continue;
     for(auto j = (*i).neighbours.begin(); j != (*i).neighbours.end(); j++)
     {
-      if(_SCHedges[*j].inHull && neighbours.insert(*j).second)
+      if(_SCHedges[*j].inHull)
       {
-        edgeIDs[index].push_back(*j);
+        edgeIDs[index].push_back(_SCHedges[*j].torusIndex);
       }
     }
     neighbours.clear();
     index++;
   }
-
-  // index = 0;
-  // for(auto i = edgeIDs.begin(); i != edgeIDs.end(); i++)
-  // {
-  //   std::cout << "Vertex " << index << ": ";
-  //   for(auto j = (*i).begin(); j != (*i).end(); j++)
-  //     std::cout << (*j) << ' ';
-  //   std::cout << std::endl;
-  //   index++;
-  // }
-
+  
   index = 0;
 
   for(auto i = _smallSpheres.begin(); i != _smallSpheres.end(); i++)
   {
       for(auto j = edgeIDs[index].begin(); j != edgeIDs[index].end(); j++)
       {
-        id = getEdgeKey(v[_SCHedges[*j].vertex1],v[_SCHedges[*j].vertex2]);
-        if(index == _toriiCones[toriiKey[id]].first.first)
-          cone = _toriiCones[toriiKey[id]].first.second;
+        if((*j) == _toriiCones[*j].first.first)
+          cone = _toriiCones[*j].first.second;
         else
-          cone = _toriiCones[toriiKey[id]].second.second;
-        _vertexNeighbours[index].push_back(std::make_pair(toriiKey[id], cone));
+          cone = _toriiCones[*j].second.second;
+        _vertexNeighbours[index].push_back(std::make_pair(*j, cone));
       }
 
     index++;
@@ -1005,11 +949,11 @@ void SchCreator3D::changeTopology(SCHheap heap)
 
 
     std::cout << "Invert Edge\n" << std::endl;
-    invertEdge(heap,a,b,c,d,fg,hj);
+    invertEdge(heap,c,d,fg,hj);
 
   } else
   {
-    i = findEdge(c,d,fg,hj);
+    i = findEdge(c,d);
 
     if(_activeVertexes == 4)
     {
@@ -1042,7 +986,7 @@ void SchCreator3D::changeTopology(SCHheap heap)
         std::cout << " Active vertex neighbours: " << findActiveNeighbours(a) << std::endl;
         std::cout << "Check if a Dissapears under: " << std::endl;
 
-        if(checkToruses(heap.index,fg.first,fg.second))
+        if(checkTorii(heap.index,fg.first,fg.second))
         {
           std::cout << "Dissapear vertex " << a << '\n' << std::endl;
           dissapearVertex(heap,a,d,c,b,fg,hj,i);
@@ -1050,7 +994,7 @@ void SchCreator3D::changeTopology(SCHheap heap)
         else
         {  
           std::cout << "Invert Edge. Torus Check. \n" << std::endl;
-          invertEdge(heap,a,b,c,d,fg,hj);
+          invertEdge(heap,c,d,fg,hj);
         }
       } else
       {
@@ -1062,7 +1006,7 @@ void SchCreator3D::changeTopology(SCHheap heap)
         
         std::cout << "New check: " << std::endl;
         
-        if(checkToruses(heap.index,hj.first,hj.second))
+        if(checkTorii(heap.index,hj.first,hj.second))
         {
           std::cout << "Dissapear vertex " << b << '\n' << std::endl;
           dissapearVertex(heap,b,c,d,a,hj,fg,i);
@@ -1070,7 +1014,7 @@ void SchCreator3D::changeTopology(SCHheap heap)
         else
         {  
           std::cout << "Invert Edge. Torus Check. \n" << std::endl;
-          invertEdge(heap,a,b,c,d,fg,hj);
+          invertEdge(heap,c,d,fg,hj);
         }
       }
     }
@@ -1155,18 +1099,34 @@ void SchCreator3D::dissapearUnderEdge(SchCreator3D::SCHheap heap)
   f4 = _SCHedges[e4].face1 == f2 ? _SCHedges[e4].face2 : _SCHedges[e4].face1;
   e = findVertex(f4,b,c);
 
+  std::cout << "RELEVANT DATA\n" << a << ' ' << b << ' ' << c << ' ' << d << ' ' << e << std::endl;
+  std::cout << f1 << ' ' << f2 << ' ' << f3 << ' ' << f4 << std::endl;
+  std::cout << e1 << ' ' << e2 << ' ' << e3 << ' ' << e4 << std::endl;
+  
+
   // remove vertex from hull
   _SCHvertexes[a].removeFromHull();
 
+
+  // remove triangle from hull
+  _SCHtriangles[f1].removeFromHull();
+  // remove triangle from hull
+  _SCHtriangles[f2].removeFromHull();
+  // remove triangle from hull
+  _SCHtriangles[f3].removeFromHull();
+  // remove triangle from hull
+  _SCHtriangles[f4].removeFromHull();
   // remove triangles and their edges from hull
-  removeTriangle(f1);
-  removeTriangle(f2);
-  removeTriangle(f3);
-  removeTriangle(f4);
+  // removeTriangle(f1);
+  // removeTriangle(f2);
+  // removeTriangle(f3);
+  // removeTriangle(f4);
 
   // get edges for face f3 and f4
-  SCHneighbours ef3 = findEdges(f3,d,b,c,e2);
-  SCHneighbours ef4 = findEdges(f4,e,b,c,e4);
+  SCHneighbours ef3 = findEdges(f3,d,b,e2);
+  SCHneighbours ef4 = findEdges(f4,e,b,e4);
+
+  std::cout << ef3.first << ' ' << ef3.second << ' ' << ef4.first << ' ' << ef4.second << std::endl;
 
   size_t triangleIndex = _SCHtriangles.size(), 
          edgeIndex = _SCHedges.size();
@@ -1175,21 +1135,38 @@ void SchCreator3D::dissapearUnderEdge(SchCreator3D::SCHheap heap)
             << " under edge " << edgeIndex+4 
             << std::endl; 
 
+  // make new triangles
+  std::cout << "\nMake new triangles:\n";
+  _SCHtriangles.push_back(SCHtriangle(b,d,c,edgeIndex,edgeIndex+1,edgeIndex+4));
+  _SCHtriangles.push_back(SCHtriangle(b,c,e,edgeIndex+4,edgeIndex+3,edgeIndex+2));
+  std::cout << triangleIndex << ' ' << b << ' ' << d << ' ' << c << ' ' << edgeIndex << ' ' << edgeIndex+1 << edgeIndex+4 << std::endl;
+  std::cout << triangleIndex+1 << ' ' << b << ' ' << c << ' ' << e << ' ' << edgeIndex+4 << ' ' << edgeIndex+3 << edgeIndex+2 << std::endl;
 
   std::cout << "\nMake new edges:\n";
 
   // update old faces
   updateNeighbours(ef3,triangleIndex);
-  updateNeighbours(ef4,triangleIndex);
+  updateNeighbours(ef4,triangleIndex+1);
 
   // make new edges
-  makeNewEdge(_SCHedges[ef3.first],ef3.first,edgeIndex,f3,heap.radius);
-  makeNewEdge(_SCHedges[ef3.second],ef3.second,edgeIndex+1,f3,heap.radius);
-  makeNewEdge(_SCHedges[ef4.first],ef4.first,edgeIndex+2,f4,heap.radius);
-  makeNewEdge(_SCHedges[ef4.second],ef4.second,edgeIndex+3,f4,heap.radius);
+  makeNewEdge(_SCHedges[ef3.first],ef3.first,edgeIndex,triangleIndex,heap.radius);
+  makeNewEdge(_SCHedges[ef3.second],ef3.second,edgeIndex+1,triangleIndex,heap.radius);
+  makeNewEdge(_SCHedges[ef4.first],ef4.first,edgeIndex+2,triangleIndex+1,heap.radius);
+  makeNewEdge(_SCHedges[ef4.second],ef4.second,edgeIndex+3,triangleIndex+1,heap.radius);
+
+  // remove edges
+  _SCHedges[e1].removeFromHull();
+  _SCHedges[e2].removeFromHull();
+  _SCHedges[e3].removeFromHull();
+  _SCHedges[e4].removeFromHull();
+
+  _SCHedges[ef3.first].removeFromHull();
+  _SCHedges[ef3.second].removeFromHull();
+  _SCHedges[ef4.first].removeFromHull();
+  _SCHedges[ef4.second].removeFromHull();
 
   // make the edge under which the vertex dissapears
-  SCHedge newEdge = SCHedge(b,c,triangleIndex,triangleIndex+1);
+  SCHedge newEdge = SCHedge(b,c,triangleIndex+1,triangleIndex);
   _SCHedges.push_back(newEdge);
   std::cout << edgeIndex+4 << ' ';
   double radius = getEdgeHeap(newEdge);
@@ -1197,18 +1174,15 @@ void SchCreator3D::dissapearUnderEdge(SchCreator3D::SCHheap heap)
     _heap.push(SCHheap(radius,type(edge),edgeIndex+4));
   else 
   {
-    std::cout << "New heap is larger than current max heap" << std::endl;
+    std::cout << "This radius is larger than current max heap" << std::endl;
   }
   addToVertexNeighbours(edgeIndex+4);
 
-  // make new triangles
-  _SCHtriangles.push_back(SCHtriangle(b,d,c,edgeIndex,edgeIndex+1,edgeIndex+4));
-  _SCHtriangles.push_back(SCHtriangle(b,c,e,edgeIndex+4,edgeIndex+3,edgeIndex+2));
 
 } // dissapearUnderEdge
 
 
-SchCreator3D::SCHneighbours SchCreator3D::findEdges(size_t f, size_t a, size_t b, size_t c, size_t e)
+SchCreator3D::SCHneighbours SchCreator3D::findEdges(size_t f, size_t a, size_t b, size_t e)
 {
   SCHneighbours edges;
   size_t key = getEdgeKey(a,b);
@@ -1237,15 +1211,6 @@ void SchCreator3D::removeTriangle(size_t t)
   _SCHedges[_SCHtriangles[t].e1].removeFromHull();
   _SCHedges[_SCHtriangles[t].e2].removeFromHull();
   _SCHedges[_SCHtriangles[t].e3].removeFromHull();
-}
-
-
-void SchCreator3D::findEdges(size_t f, size_t a, size_t b, size_t e)
-{
-  SCHneighbours edges;
-  bool inSet;
-  std::set<size_t> indexes;
-  indexes.insert(e);
 }
 
 size_t SchCreator3D::findEdge(size_t f, size_t e1, size_t e2)
@@ -1334,20 +1299,13 @@ void SchCreator3D::dissapearVertex(SCHheap heap, size_t v1, size_t v2, size_t v3
   _activeVertexes--;
 } // dissapearVertex
 
-void SchCreator3D::checkNewHeap(double newHeap)
-{
-
-}
-
 void SchCreator3D::addToVertexNeighbours(size_t e)
 {
   _SCHvertexes[_SCHedges[e].vertex1].neighbours.push_back(e);
   _SCHvertexes[_SCHedges[e].vertex2].neighbours.push_back(e);
 } // addToVertexNeighbours
 
-size_t SchCreator3D::findEdge(size_t v1, size_t v2, 
-                              SchCreator3D::SCHneighbours e12,
-                              SchCreator3D::SCHneighbours e34)
+size_t SchCreator3D::findEdge(size_t v1, size_t v2)
 {
   std::vector<size_t>::iterator i;
   for(i = _SCHvertexes[v1].neighbours.begin();
@@ -1363,18 +1321,9 @@ size_t SchCreator3D::findEdge(size_t v1, size_t v2,
   return *i;
 } // findEdge
 
-void SchCreator3D::invertEdge(SCHheap heap, size_t v1, size_t v2, size_t v3, size_t v4, 
+void SchCreator3D::invertEdge(SCHheap heap, size_t v3, size_t v4, 
                               SCHneighbours e12, SCHneighbours e34)
 {
-
-  Sphere s = findCircumSphere4(v1, v2, v3, v4);
-  std::cout << "Circumsphere center: " << s.center.transpose() << std::endl;
-  std::cout << "Circumsphere radius: " << s.radius << std::endl;
-  std::cout << "Distance to a: " << (_vertexes[v1]-s.center).norm() << std::endl;
-  std::cout << "Distance to b: " << (_vertexes[v2]-s.center).norm() << std::endl;
-  std::cout << "Distance to c: " << (_vertexes[v3]-s.center).norm() << std::endl;
-  std::cout << "Distance to d: " << (_vertexes[v4]-s.center).norm() << std::endl << std::endl;
-
   // remove edges and traingles from heap
   _SCHedges[heap.index].removeFromHull();
   _SCHtriangles[_SCHedges[heap.index].face1].removeFromHull();
@@ -1417,6 +1366,7 @@ void SchCreator3D::invertEdge(SCHheap heap, size_t v1, size_t v2, size_t v3, siz
                                       
   // add edges to the hull and heap again
   std::cout << "New edges: " << std::endl;
+  std::cout << _SCHedges.size()-1 << ' ' << v3 << ' ' << v4 << std::endl; 
   makeNewEdge(_SCHedges[e12.first], e12.first,_SCHedges.size(),_SCHtriangles.size()-1,heap.radius);
   makeNewEdge(_SCHedges[e12.second], e12.second,_SCHedges.size(),_SCHtriangles.size()-1,heap.radius);
   makeNewEdge(_SCHedges[e34.first], e34.first,_SCHedges.size(),_SCHtriangles.size()-2,heap.radius);
@@ -1466,12 +1416,11 @@ void SchCreator3D::updateNeighbours(size_t oldE, size_t f, size_t e)
 {
   size_t face;
   // find the face to update
-  std::cout << "Face to update: " << f << " edge: " << e << " old edge: " << oldE << std::endl;
   if(_SCHedges[e].face1 == f) 
     face = _SCHedges[e].face2;
   else 
     face = _SCHedges[e].face1;  
-  
+  std::cout << "Face to update: " << face << " edge: " << e << " old edge: " << oldE << std::endl;
   
   // find the old edge and update it
   if(_SCHtriangles[face].e1 == oldE) 
@@ -1834,7 +1783,7 @@ bool SchCreator3D::checkHeap()
   return check;
 } // checkHeap
 
-bool SchCreator3D::checkToruses(size_t e, size_t e1, size_t e2)
+bool SchCreator3D::checkTorii(size_t e, size_t e1, size_t e2)
 {
   std::cout << "\nChecking thickness of edge " << e << ": " << std::endl; 
   bool check = torusThicknessCheck(_SCHedges[e].vertex1,_SCHedges[e].vertex2,
@@ -1851,6 +1800,11 @@ bool SchCreator3D::checkToruses(size_t e, size_t e1, size_t e2)
   return check;
 }
 
+/*  Given the indexes of two vertexex and two faces that contain them, this function computes 
+*   the dot product of their plane normals.
+*   
+*   If the dot product is equal or close to -1, the function returns true.
+*/
 bool SchCreator3D::torusThicknessCheck(size_t v1, size_t v2, size_t f1, size_t f2)
 {
   Eigen::Vector3d n1 = getPlaneNormal(v1,v2,f1), n2 = getPlaneNormal(v2,v1,f2);
@@ -1858,10 +1812,10 @@ bool SchCreator3D::torusThicknessCheck(size_t v1, size_t v2, size_t f1, size_t f
   //           << "\nnormal2 b a c2: " << n2.transpose() << std::endl;
 
   double dotProduct = n1.dot(n2), d  = dotProduct + 1; 
-  std::cout << "n1.n2: " << dotProduct << "  ";
+  std::cout << "n1.n2: " << dotProduct << "  " << d*d << ' ';
   // std::cout << "\td*d < epsilon: " << d*d << " < " << _epsilon << std::endl;
 
-  return (d*d) < _epsilon;
+  return (d*d) <= _epsilon;
 } // torusThicknessCheck
 
 void SchCreator3D::computeSCH(const std::string & filename)
@@ -1907,6 +1861,21 @@ void SchCreator3D::computeSCH(const std::string & filename)
 
   while(_alpha > _desiredAlpha)
   {
+    size_t tindex = 0;
+    for(auto i = _SCHtriangles.begin(); i != _SCHtriangles.end(); i++)
+    {
+      if(i->inHull)
+      {
+        if(!_SCHedges[i->e1].inHull || !_SCHedges[i->e2].inHull || !_SCHedges[i->e3].inHull)
+        {
+          std::cout << "The triangle index " << tindex << ' ' << i->e1 << ' ' << i->e2 << ' ' << i->e3 << std::endl;
+          std::cout << "The triangle index " << i->inHull << ' ' << _SCHedges[i->e1].inHull << ' ' << _SCHedges[i->e2].inHull << ' ' << _SCHedges[i->e3].inHull << std::endl;
+          exit(1);
+        }
+      }
+      tindex++;
+    }
+
     if(_heap.size() == 0 || (_activeVertexes <= 4 && heap.t == 1))
       break;
   

@@ -158,6 +158,7 @@ namespace sch
       bool inHull = true;
       Eigen::Vector3d vertex;
       std::vector<size_t> neighbours;
+      size_t ssIndex = -1;
 
       SCHvertex(const Eigen::Vector3d &v,const std::vector<size_t> &n)
       {
@@ -175,6 +176,7 @@ namespace sch
     {
       bool inHull = true;
       size_t vertex1, vertex2, face1, face2;
+      size_t torusIndex = -1;
 
       SCHedge(size_t p1,size_t p2,size_t f1, size_t f2)
       {
@@ -195,6 +197,7 @@ namespace sch
       bool inHull = true;
       size_t p1,p2,p3;
       size_t e1,e2,e3;
+      size_t bsIndex = -1;
 
       SCHtriangle(size_t a,size_t b,size_t c,size_t d,size_t e,size_t f)
       {
@@ -307,15 +310,14 @@ namespace sch
     void updateNeighbours(size_t oldE, size_t f, size_t e);
     void addToVertexNeighbours(size_t e);
     SCHneighbours findEdge(size_t f1, size_t f2, size_t v1, size_t v2, size_t v3);
-    void findEdges(size_t f, size_t a, size_t b, size_t e);
-    SCHneighbours findEdges(size_t f, size_t a, size_t b, size_t c, size_t e);
+    SCHneighbours findEdges(size_t f, size_t a, size_t b, size_t e);
 
-    size_t findEdge(size_t v1, size_t v2, SCHneighbours e12, SCHneighbours e34);
+    size_t findEdge(size_t v1, size_t v2);
     bool checkSameNeighbour(size_t v1, size_t v2, type t);
     bool checkSameNeighbour(size_t e1, size_t e2, size_t f1);
     void dissapearVertex(SCHheap heap, size_t v1, size_t v2, size_t v3 , size_t v4, 
                          SCHneighbours e12,SCHneighbours e34, size_t e);
-    void invertEdge(SCHheap heap, size_t v1, size_t v2, size_t v3, size_t v4,
+    void invertEdge(SCHheap heap, size_t v3, size_t v4,
                     SCHneighbours e12, SCHneighbours e34);
     bool checkPointsInSphere(const Sphere &s);
     bool checkPointsInSphere(size_t a, size_t b, size_t c, size_t d);
@@ -330,7 +332,6 @@ namespace sch
                             const Eigen::Vector3d &C2);
     bool checkOrientation(size_t a, size_t b, size_t c);
     double angleBetween(Eigen::Vector3d a, Eigen::Vector3d b);
-    void checkNewHeap(double newHeap);
     void orderTriangle(size_t a, size_t &b, size_t &c);
     void swap(size_t &a, size_t &b);
     bool checkLimitCase(size_t a, size_t b, size_t c, size_t d, double r);
@@ -339,7 +340,7 @@ namespace sch
     size_t findEdge(size_t f, size_t e1, size_t e2);
     void removeTriangle(size_t t);
     bool torusThicknessCheck(size_t v1, size_t v2, size_t f1, size_t f2);
-    bool checkToruses(size_t e, size_t e1, size_t e2);
+    bool checkTorii(size_t e, size_t e1, size_t e2);
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
