@@ -58,6 +58,7 @@ chPoints = np.array(parsed_yaml.get("convexHull_points"))
 # Create numpy array of removed points and their index
 removedPointsRadius = flip(np.array([i[0] for i in parsed_yaml.get("removed_points_radius_and_index")]))
 removedPointsIndex = [i[1] for i in parsed_yaml.get("removed_points_radius_and_index")]
+
 # flip the array of indexes
 rIndex = np.array(removedPointsIndex[::-1])
 # get array of eliminated points
@@ -74,7 +75,6 @@ fig, ax = plt.subplots()
 # draw circles
 n = len(chPoints)
 initial_alpha = alpha
-
 # remove the eliminated points
 newSCHPoints = np.delete(chPoints,rIndex,axis=0)
 n = len(newSCHPoints)
@@ -111,7 +111,7 @@ sliderAxes = plt.axes([0.2, 0.05, 0.6, 0.1], facecolor = 'ghostwhite')
 Nslider = Slider(
     ax = sliderAxes,
     label = 'Alpha value',
-    valmin = math.ceil(initial_alpha - 1),
+    valmin = initial_alpha,
     valmax = math.floor(removedPointsRadius[len(removedPointsRadius)-1]*1.25),
     valinit = initial_alpha
 )

@@ -85,6 +85,8 @@ namespace sch
         r = findCircumcircleRadius();
       }
 
+      Triangle(){}
+
       double findCircumcircleRadius()
       {
         double A = (a - b).norm();
@@ -101,21 +103,21 @@ namespace sch
       }
     };
 
-    /*! \class Radius
-    *	\brief %Class Radius
+    /*! \class Heap
+    *	\brief %Class Heap
     *
     * A structure containing the indexes of the triangle's vertices,
     * the index of the triangle itself and the circumcircle radius.
     */
 
-    struct Radius
+    struct Heap
     {
       size_t startpointIndex, midpointIndex, 
              endpointIndex, prevTriangleIndex,
              triangleIndex, nextTriangleIndex;
       double radius;
 
-      Radius(size_t spIndex, size_t mpIndex, 
+      Heap(size_t spIndex, size_t mpIndex, 
              size_t epIndex, size_t prevtIndex, 
              size_t tIndex, size_t nexttIndex, double R)
       {
@@ -128,9 +130,9 @@ namespace sch
         radius = R;
       }
 
-      Radius() {}
+      Heap() {}
       
-      bool operator<(const Radius &b) const {
+      bool operator<(const Heap &b) const {
         return (radius < b.radius);
       }
     };
@@ -145,10 +147,10 @@ namespace sch
     void printPoints();
 
   private:
-    void listTriangles();
+    void listTriangles(size_t n);
     void makeTriangles(size_t previousMidpoint);
-    void updateTriangles(std::list<Triangle> & triangles);
-    void removePointFromHull(const Radius & heap);
+    void updateTriangles();
+    void removePointFromHull(const Heap & heap);
     bool checkIfMaxHeapIsInHull();
     size_t findPreviousPoint(size_t pointIndex);
     size_t findNextPoint(size_t pointIndex);
@@ -167,8 +169,8 @@ namespace sch
     double _alpha;
     double _initialAlpha;
     std::string _pointsPath;
-    std::priority_queue<Radius> _heap;
-    std::vector<Radius> _eliminatedVertex;
+    std::priority_queue<Heap> _heap;
+    std::vector<Heap> _eliminatedVertex;
     std::list<SchCreator2D::Triangle> _triangles;
   }; //class SchCreator2D
 

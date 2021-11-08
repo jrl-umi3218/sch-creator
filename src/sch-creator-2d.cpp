@@ -13,6 +13,7 @@ namespace sch
 		arrays to be procesed throughout the algorithm */
 	void SchCreator2D::readPointsFromFile()
 	{
+		std::cout << "Reading points... ";
 		std::string fileString;
 		std::ifstream file;
 		double x, y;
@@ -21,7 +22,7 @@ namespace sch
 		file.open(_pointsPath);
 		//verify file is correctly opened, exit otherwise
 		if(!file) {
-			std::cout << "File not found." << std::endl;
+			std::cout << "\nFile not found. Exiting..." << std::endl << std::endl;
 			exit(1);
 		}
 
@@ -42,6 +43,7 @@ namespace sch
 		
 		// close the file
 		file.close();
+		std::cout << "Done." << std::endl;
 	}
 
 	// print triangles
@@ -77,21 +79,22 @@ namespace sch
 	}
 
 	/* Listing triangles and inserting their circumcircle radius to the heap */
-	void SchCreator2D::listTriangles() 
+	void SchCreator2D::listTriangles(size_t n) 
 	{
-		// get the amount of points
-		size_t n = _pointsStructure.size();
+		std::cout << "Finding initial triangles... ";
+		Triangle t;
+		Heap h;
 
-		// declare the unnordered vector of Radius
-		std::vector<SchCreator2D::Radius> radii(n); 
+		// declare the unnordered vector of Heap
+		std::vector<SchCreator2D::Heap> radii(n); 
 
 		for (size_t i = 0; i < n; i++) {
-			// make triangle and corresponding Radius
-			Triangle t = Triangle(_pointsStructure[i % n].point, 
-						_pointsStructure[(i + 1) % n].point, 
-						_pointsStructure[(i + 2) % n].point);
-			Radius r = Radius(i % n, (i + 1) % n, (i + 2) % n,
-							 (i + n - 1) % n, (i + n) % n, (i + 1 + n) % n, t.r);
+			// make triangle and corresponding Heap
+			t = Triangle(_pointsStructure[i % n].point, 
+						 _pointsStructure[(i + 1) % n].point, 
+						 _pointsStructure[(i + 2) % n].point);
+			h = Heap(i % n, (i + 1) % n, (i + 2) % n,
+				    (i + n - 1) % n, (i + n) % n, (i + 1 + n) % n, t.r);
 
 			// std::cout << "Midpoint: " << (i + 1) % n << std::endl;
 			// std::cout << "Prev Triangle: " << (i + n - 1) % n << std::endl;
@@ -101,19 +104,21 @@ namespace sch
 			// add triangle to list
 			_triangles.push_back(t);
 			// add radius to unordered vector
-			radii[i] = r;
+			radii[i] = h;
 		}
 
-		std::cout << "***** Initial triangles *****" << std::endl;
+		// std::cout << "***** Initial triangles *****" << std::endl;
 		//printTriangles();
 
-		// create max heap of Radius 
-		_heap = std::priority_queue<SchCreator2D::Radius>(radii.begin(), radii.end());
+		// create max heap of Heap 
+		_heap = std::priority_queue<SchCreator2D::Heap>(radii.begin(), radii.end());
+
+		std::cout << "Done." << std::endl;
 	}
 
 	/* 	changes the in Hull state of the removed point and changes its corresponding
 		triangle's inHeap state to false */
-	void SchCreator2D::removePointFromHull(const Radius & maxHeap) 
+	void SchCreator2D::removePointFromHull(const Heap & maxHeap) 
 	{
 		// create iterator for the list of triangles
 		std::list<Triangle>::iterator it;
@@ -138,7 +143,7 @@ namespace sch
 		_pointsStructure[maxHeap.midpointIndex].removeFromHull();
 
 		
-		std::cout << "Point removed" << std::endl;
+		// std::cout << "Point removed" << std::endl;
 		// std::cout << "Circumcircle: " << maxHeap.radius << std::endl;
 		// std::cout << "Prev Triangle: " << (trianglesIndex[0] + trianglesSize) % trianglesSize << std::endl;
 		// std::cout << "Curr Triangle: " << (trianglesIndex[1] + trianglesSize) % trianglesSize << std::endl;
@@ -197,19 +202,14 @@ namespace sch
 	/* Finds the closest previous triangle */
 	size_t SchCreator2D::findPreviousTriangle(size_t triangleIndex)
 	{
-		// std::cout << "Find Previous Triangle" << std::endl;
 		std::list<Triangle>::iterator it;
 		size_t i, n = _triangles.size();
 		for(i = 1; i < n-1; i++)
 		{
 			it = _triangles.begin();
 			advance(it, (triangleIndex - i + n) % n);
-			// std::cout << "Triangle " << (triangleIndex - i + n) % n << std::endl;
-			// std::cout << (*it).inHeap << std:: endl;
 			if ((*it).inHeap) break;
 		}
-
-		std::cout << std::endl;
 
 		return (triangleIndex - i + n) % n;
 	}
@@ -217,19 +217,14 @@ namespace sch
 	// find next triangle in heap
 	size_t SchCreator2D::findNextTriangle(size_t triangleIndex)
 	{
-		// std::cout << "Find Next Triangle" << std::endl;
 		std::list<Triangle>::iterator it;
 		size_t i, n = _triangles.size();
 		for(i = 1; i < n; i++)
 		{
 			it = _triangles.begin();
 			advance(it, (triangleIndex + i + n) % n);
-			// std::cout << "Triangle " << (triangleIndex + i + n) % n << std::endl;
-			// std::cout << (*it).inHeap << std:: endl;
 			if ((*it).inHeap) break;
 		}
-		
-		std::cout << std::endl;
 
 		return (triangleIndex + i + n) % n;
 	}
@@ -246,17 +241,11 @@ namespace sch
 		// get the previous triangle in the heap
 		size_t prevTriangle = findPreviousTriangle(_heap.top().prevTriangleIndex);
 
-		std::cout << "****** new triangle 1 ******" << std::endl;
-		std::cout << "New Midpoint: " << newMidpoint << std::endl;
-		std::cout << "New Startpoint: " << newStartpoint << std::endl;
-		std::cout << "New Endpoint: " << newEndpoint << std::endl;
-		std::cout << "Previous triangle: " << prevTriangle << std::endl;
-
 		// build the first new triangle and radius
 		Triangle newTriangle1 = Triangle(_pointsStructure[newStartpoint].point,
 										_pointsStructure[newMidpoint].point, 
 										_pointsStructure[newEndpoint].point);
-		Radius newRadius1 = Radius(newStartpoint, newMidpoint, newEndpoint, 
+		Heap newRadius1 = Heap(newStartpoint, newMidpoint, newEndpoint, 
 										prevTriangle, _triangles.size(), 
 										_triangles.size()+1, newTriangle1.r);
 
@@ -269,17 +258,11 @@ namespace sch
 		prevTriangle = _triangles.size();
 		size_t nextTriangle = findNextTriangle(_heap.top().nextTriangleIndex);
 
-		// std::cout << "****** new triangle 2 ******" << std::endl;
-		// std::cout << "New Midpoint: " << newMidpoint << std::endl;
-		// std::cout << "New Startpoint: " << newStartpoint << std::endl;
-		// std::cout << "New Endpoint: " << newEndpoint << std::endl;
-		// std::cout << "Next triangle: " << nextTriangle << std::endl;
-
 		// build the second triangle and radius
 		Triangle newTriangle2 = Triangle(_pointsStructure[newStartpoint].point, 
 										_pointsStructure[newMidpoint].point, 
 										_pointsStructure[newEndpoint].point);
-		Radius newRadius2 = Radius(newStartpoint, newMidpoint, newEndpoint, 
+		Heap newRadius2 = Heap(newStartpoint, newMidpoint, newEndpoint, 
 										prevTriangle, prevTriangle + 1,
 										nextTriangle, newTriangle2.r);
 		
@@ -289,14 +272,11 @@ namespace sch
 		// add radius to the heap
 		_heap.push(newRadius1);
 		_heap.push(newRadius2);
-
-		// std::cout << "***** NEW TRIANGLES *****" << std::endl;
-
 	}
 
 	/* 	Stores the index of the max heap midpoint, removes it from the heap 
 		and gets the two new triangles*/
-	void SchCreator2D::updateTriangles(std::list<Triangle> & triangles)
+	void SchCreator2D::updateTriangles()
 	{
 		// get the index of the point to eliminate
 		size_t eliminatedPointIndex = (_heap.top()).midpointIndex;
@@ -311,6 +291,7 @@ namespace sch
 
 	void SchCreator2D::findNewAlpha()
 	{
+		std::cout << "Computing new value for alpha... ";
 		_initialAlpha = _alpha;
 		double topAlpha = (_heap.top()).radius + 0.05;
 
@@ -325,19 +306,19 @@ namespace sch
 			
 		}
 		_alpha -= 0.05;
-		std::cout << "New Alpha: " << _alpha << std::endl;	
+		std::cout << "Done. New Alpha: " << _alpha << std::endl;	
 	}
 
 	void SchCreator2D::findClosestPoint()
 	{
-		std::priority_queue<Radius> newHeap = _heap;
-		Radius r1 = newHeap.top();
+		std::priority_queue<Heap> newHeap = _heap;
+		Heap r1 = newHeap.top();
 		size_t point1Index = r1.midpointIndex;
 		newHeap.pop();
-		Radius r2 = newHeap.top();
+		Heap r2 = newHeap.top();
 		size_t point2Index = r2.midpointIndex;
 		newHeap.pop();
-		Radius r3 = newHeap.top();
+		Heap r3 = newHeap.top();
 		size_t point3Index = r3.midpointIndex;
 
 		Eigen::Vector2d p1 = _pointsStructure[point1Index].point;
@@ -373,14 +354,6 @@ namespace sch
 				_eliminatedVertex.push_back(r1);
 			}
 		}
-
-		// std::cout << "Point 1\n" << p1 << std::endl;
-		// std::cout << "Point 2\n" << p2 << std::endl;
-		// std::cout << "Point 3\n" << p3 << std::endl;
-		// std::cout << "d12: " << d12 << "\td31: " << d31;
-		// std::cout << "\td32: " << d32 << std::endl; 
-
-
 	}
 
 	/*	processes the points and obtains the ones belonging to the sch,
@@ -394,24 +367,25 @@ namespace sch
 
 		// ensure there's at least 3 points, exit program otherwise
 		if(pointsInSCH < 3) {
-			std::cout << "You need at least 3 points.\n" << std::endl;
+			std::cout << "The convex hull must have at least 3 points. Exiting..." << std::endl;
 			exit(1);
 		} 
 
 		// make list of all initial triangles
-		listTriangles();
+		listTriangles(pointsInSCH);
 
+		std::cout << "Finding SCH..." << std::endl;
 		// while the max Heap radius is larger than alpha
 		while((_heap.top()).radius > _alpha) {
 			// Remove middle point and make the new triangles
 			removePointFromHull(_heap.top());
 			
-			updateTriangles(_triangles);
+			updateTriangles();
 			// decrease the amount of points in the sch
 			pointsInSCH--;
 			// ensure that, after elimination, there's still at least 3 points
 			if(pointsInSCH == 3) {
-				std::cout << "\nAlpha is too small.\n" << std::endl;
+				std::cout << "Alpha is too small." << std::endl;
 				findNewAlpha();
 				findClosestPoint();
 				pointsInSCH--;
@@ -425,18 +399,13 @@ namespace sch
 				_heap.pop();
 			}
 
-			std::cout << "points in sch: " << pointsInSCH << std::endl;
-
-			printPoints();
-			printTriangles();
-
-			std::cout << '\n' << "New heap: " << _heap.top().radius << '\n' << std::endl;
-			std::cout << "-------------------------" << std::endl;
+			// std::cout << '\n' << "New heap: " << _heap.top().radius << '\n' << std::endl;
+			// std::cout << "-------------------------" << std::endl;
 		}
 
 		//printTriangles();
-		std::cout << "points in sch: " << pointsInSCH << std::endl;
-		printPoints();
+		std::cout << "SCH successfully found. " << std::endl;
+		// printPoints();
 
 		// add all points that are still part of the hull to the schPoints array
 		for (auto i = _pointsStructure.begin(); i != _pointsStructure.end(); i++) {
@@ -507,11 +476,11 @@ namespace sch
 		return out;
 	}
 
-	// Overwriting the << operation for sch's Radius and the YAML emitter
-	YAML::Emitter& operator << (YAML::Emitter& out, const sch::SchCreator2D::Radius& r) {
+	// Overwriting the << operation for sch's Heap and the YAML emitter
+	YAML::Emitter& operator << (YAML::Emitter& out, const sch::SchCreator2D::Heap& r) {
 		out << YAML::Flow;
 		out << YAML::BeginSeq << r.radius << r.midpointIndex << YAML::EndSeq;
-		// Radius' radius value and eliminated point index added to a YAML flow
+		// Heap' radius value and eliminated point index added to a YAML flow
 		return out;
 	}
 
@@ -539,7 +508,7 @@ namespace sch
 		//Begin sequence for removed ch points
 		out << YAML::Key << "removed_points_radius_and_index";
 		out << YAML::Value << YAML::BeginSeq;
-		out << YAML::Comment("[Radius, index]");
+		out << YAML::Comment("[Heap, index]");
 		for(size_t i = 0; i <  _eliminatedVertex.size(); i++) {
 			out << _eliminatedVertex[i];
 		}
@@ -563,17 +532,15 @@ namespace sch
 
 }
 
-// Run:
-// "C:\Users\Home\Documents\UDLAP\2021\japon\balooninflating\sch-creator\build\src\Debug\sch-creator-2d.exe" "C:/Users/Home/Documents/UDLAP/2021/japon/convexhull/sch/points.txt" 9
-// "C:\Users\Home\Documents\UDLAP\2021\japon\balooninflating\sch-creator\build\src\Release\sch-creator-2d.exe" "C:/Users/Home/Documents/UDLAP/2021/japon/convexhull/sch/points.txt" 7
-// "/home/amrf/balloon-inflating/sch-creator/build/src/sch-creator-2d" "/home/amrf/Documents/points.txt" 7
 int main(int argc, char** argv) {
-	std::cout << "Points file is in the following location:" << std::endl;
-	std::cout << argv[1] << std:: endl;
-	std::cout << "Alpha inserted: " << argv[2] << std::endl;
+	std::cout << "\n SCH parameters: a = " <<  argv[2] << std::endl << std::endl;
+    std::cout << "Opening " <<  argv[1] << std::endl;
+
 	sch::SchCreator2D sch(argv[1]);
 	sch.FindSch2D(std::stod(argv[2]));
-	std::cout << "Is hull strictly convex? " << sch.checkHull() << std::endl;
+
+	if(argc == 4)
+		std::cout << "Is hull strictly convex? " << sch.checkHull() << std::endl;
 
 	return 0;
 }
