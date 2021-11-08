@@ -415,7 +415,7 @@ namespace sch
 		}
 
 		// get the amount of eliminated points
-		_eliminatedPoints = _points.size();
+		_eliminatedPoints = _points.size()-_schPoints.size();
 
 		// generate the output YAML file
 		makeYAML();
