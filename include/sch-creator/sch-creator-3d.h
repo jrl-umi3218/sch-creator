@@ -340,7 +340,7 @@ namespace sch
     size_t findEdge(size_t f, size_t e1, size_t e2);
     void removeTriangle(size_t t);
     bool torusThicknessCheck(size_t v1, size_t v2, size_t f1, size_t f2);
-    bool checkTorii(size_t e, size_t e1, size_t e2);
+    bool checkTorii(size_t e1, size_t e2);
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
@@ -351,6 +351,7 @@ namespace sch
   private:
     double _r, _R, _alpha, _desiredAlpha, _epsilon;
     double noise = 100, maxBodyDistance = 0;
+    bool _limitCase = false;
 
     size_t _activeVertexes;
     std::vector<SCHvertex> _SCHvertexes;
