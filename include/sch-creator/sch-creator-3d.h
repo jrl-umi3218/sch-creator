@@ -300,6 +300,7 @@ namespace sch
     Sphere findCircumSphere4(size_t a, size_t b, size_t c, size_t d);
     
     // other functions
+    void swap(SCHneighbours &a, SCHneighbours &b);
     void changeTopology(SCHheap heap);
     void printEdges();
     void printVertexes();

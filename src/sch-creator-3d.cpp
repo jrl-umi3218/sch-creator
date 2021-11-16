@@ -101,7 +101,7 @@ bool SchCreator3D::findMaxDistance()
 
   noise /= 1000;
 
-  std::cout << "Maximum body distance: " << maxBodyDistance << std::endl;
+  std::cout << "Maximum body distance: " << maxBodyDistance << ' ' << (2 * _desiredAlpha) << std::endl;
   std::cout << "Minimum body distance: " << noise << std::endl;
 
   if(maxBodyDistance >= 2 * _desiredAlpha)
@@ -346,7 +346,9 @@ void SchCreator3D::getBigSpheres()
     {
 
       s = findSphereThroughPoints((*i).p1, (*i).p2, (*i).p3);
-      bs = BigSphere(s,v[(*i).p1],v[(*i).p2],v[(*i).p3]);
+      bs = BigSphere(s,_SCHvertexes[(*i).p1].ssIndex,
+                     _SCHvertexes[(*i).p2].ssIndex,
+                     _SCHvertexes[(*i).p3].ssIndex);
 
       // add to big sphere vector
       _bigSpheres.push_back(bs);
@@ -608,6 +610,7 @@ void SchCreator3D::getTorii()
   Face face;
   Torus torus;
   SCHplane plane;
+  size_t diff = _smallSpheres.size();
 
   // go through all edges
   for(auto i = _SCHedges.begin(); i != _SCHedges.end(); i++)
@@ -616,7 +619,7 @@ void SchCreator3D::getTorii()
     if(i->inHull)
     {
       // get the torus
-      torus = getTorus(_bigSpheres[_SCHtriangles[i->face1].bsIndex].s,_SCHvertexes[i->vertex1].ssIndex,_SCHvertexes[i->vertex2].ssIndex);
+      torus = getTorus(_bigSpheres[_SCHtriangles[i->face1].bsIndex-diff].s,i->vertex1,i->vertex2);
       // add torus to _torii
       _torii.push_back(torus);
       // get torus cones                torusIndex, pair(SCHcone,SCHcone)
@@ -629,7 +632,6 @@ void SchCreator3D::getTorii()
   }
 
   index = 0;
-  size_t diff = _smallSpheres.size();
   for(auto i = _SCHtriangles.begin(); i != _SCHtriangles.end(); i++)
   {
     if(i->inHull)
@@ -750,8 +752,8 @@ Eigen::Vector3d SchCreator3D::getPlaneNormal(size_t a, size_t b, size_t f)
  */
 SchCreator3D::Torus SchCreator3D::getTorus(const Sphere & s, size_t a, size_t b)
 {
-  Eigen::Vector3d center = (_smallSpheres[a].center + _smallSpheres[b].center) / 2;
-  return Torus(center, (_smallSpheres[a].center - _smallSpheres[b].center).normalized(),
+  Eigen::Vector3d center = (_vertexes[a] + _vertexes[b]) / 2;
+  return Torus(center, (_vertexes[a] - _vertexes[b]).normalized(),
               (center - s.center).norm());
 }
 
@@ -902,6 +904,13 @@ void SchCreator3D::swap(size_t &a, size_t &b)
   b = temp;
 } // swap
 
+void SchCreator3D::swap(SchCreator3D::SCHneighbours &a, SchCreator3D::SCHneighbours &b)
+{
+  SCHneighbours temp = a;
+  a = b;
+  b = temp;
+} // swap
+
 void SchCreator3D::orderTriangle(size_t a, size_t &b, size_t &c)
 {
   if(!checkOrientation(a,b,c))
@@ -914,6 +923,8 @@ bool SchCreator3D::checkLimitCase(size_t a, size_t b, size_t c, size_t d, double
     {
       std::cout << "\nNo more vertexes can be removed. Stoping the algorithm at radius " 
                 << r << "...\n" << std::endl;
+      _limitCase = true;
+      _desiredAlpha = r;
       return true;
   }
   
@@ -923,47 +934,48 @@ bool SchCreator3D::checkLimitCase(size_t a, size_t b, size_t c, size_t d, double
 void SchCreator3D::changeTopology(SCHheap heap)
 {
   size_t f1, f2;
-  size_t a, b, c, d, i;
-  SCHneighbours fg, hj;
+  size_t a, b, c, d, i, c_copy, d_copy;
+  SCHneighbours fg, hj, fg_copy, hj_copy;
 
+  // get the edge vertexes
   a = _SCHedges[heap.index].vertex1;
   b = _SCHedges[heap.index].vertex2;
+  // get the neighbour faces
   f1 = _SCHedges[heap.index].face1;
   f2 = _SCHedges[heap.index].face2;
+  // get the neighbour vertexes from the faces
   c = findVertex(f1,a,b);
   d = findVertex(f2,a,b);
-
-  if(c == d)
-  {
-    std::cout << "Same triangle" << std::endl;
-  }
-
+  c_copy = c;
+  d_copy = d;
+  // find the edges conecting a and b to c and d
   fg = findEdge(f1, f2, a, c, d);
   hj = findEdge(f1, f2, b, c, d);
+  fg_copy = fg;
+  hj_copy = hj;
 
-
-  std::cout << "RELEVANT DATA" << std::endl;
+  // check for thickness of edge in the heap
+  std::cout << "Check thickness of edge " << heap.index << ':';
+  if(torusThicknessCheck(_SCHedges[heap.index].vertex1,_SCHedges[heap.index].vertex2,
+                                  _SCHedges[heap.index].face1,_SCHedges[heap.index].face2))
+  {
+    std::cout << "RELEVANT DATA" << std::endl;
   std::cout << a << ' ' << b << ' ' << c << ' ' << d << std::endl;
   std::cout << fg.first << ' ' << fg.second << ' ' << hj.first << ' ' << hj.second << std::endl;
 
+  // check if c and d are connected by an edge
   std::cout << "Check if cd have the same neighbour: ";
   if(!checkSameNeighbour(c,d,type(edge)))
   {
-    std::cout << "0. \nCheck if f and h have the same neighbout that is not " << f1 << " or " << f2 << ": ";
-    if(checkSameNeighbour(fg.first,hj.first,f1) && checkSameNeighbour(fg.first,hj.first,f2))
-    {
-      std::cout << "1. " << std::endl;
-    } else
-      std::cout << "0. " << std::endl;
-
-
+    // if they are not connected, invert the edge
     std::cout << "Invert Edge\n" << std::endl;
     invertEdge(heap,c,d,fg,hj);
-
   } else
   {
+    // find the edge connecting c and d
     i = findEdge(c,d);
 
+    // check for limit case
     if(_activeVertexes == 4)
     {
       if(checkLimitCase(a,b,c,d,heap.radius))
@@ -977,6 +989,7 @@ void SchCreator3D::changeTopology(SCHheap heap)
           std::cout << "Dissapear vertex. LIMIT CASE. " << b << '\n' << std::endl;
           dissapearVertex(heap,b,c,d,a,hj,fg,i);
           _limitCase = true;
+          _desiredAlpha = heap.radius;
         }
       } 
       else
@@ -984,71 +997,69 @@ void SchCreator3D::changeTopology(SCHheap heap)
         std::cout << "Dissapear vertex. LIMIT CASE. " << a << '\n' << std::endl;
         dissapearVertex(heap,a,d,c,b,fg,hj,i);
         _limitCase = true;
+        _desiredAlpha = heap.radius;
       }
     } else
     {
+      // check which vertex dissapears
 
       std::cout << "Check which vertex dissapears." << std::endl;
       std::cout << "Do f and i have the same face as neighbour?" << std::endl;
 
-
+      // check if edges fg.second and i share a face as neighbour
       if(checkSameNeighbour(fg.second,i,type(triangle)))
       {
+        // a could dissapear
         std::cout << " Active vertex neighbours: " << findActiveNeighbours(a) << std::endl;
         std::cout << "Check if a Dissapears under: " << std::endl;
 
-        std::cout << "Check thickness of edge " << heap.index << ':';
-        if(torusThicknessCheck(_SCHedges[heap.index].vertex1,_SCHedges[heap.index].vertex2,
-                                  _SCHedges[heap.index].face1,_SCHedges[heap.index].face2))
-        {
+        
+      } else
+      {
+        // b dissapears
+        std::cout << "Vertex b dissapears. Updating values..." << std::endl;
+        // // update elements
+        swap(a,b);
+        swap(c,d);
+        swap(fg,hj);
+
+        std::cout << "RELEVANT DATA" << std::endl;
+        std::cout << a << ' ' << b << ' ' << c << ' ' << d << std::endl;
+        std::cout << fg.first << ' ' << fg.second << ' ' << hj.first << ' ' << hj.second << std::endl;
+
+        std::cout << "0. Active vertex neighbours: " << findActiveNeighbours(b) << std::endl;
+        std::cout << "Check if b Dissapears under " << std::endl;
+        
+      }
+      
+          // check thicknes of the edges connected to a
           std::cout << " 1.  \nCheck thickness of torii " <<  fg.first << ' ' << fg.second << std::endl;
           if(checkTorii(fg.first,fg.second))
           {
+            // dissapear the vertex
             std::cout << "Dissapear vertex " << a << '\n' << std::endl;
             dissapearVertex(heap,a,d,c,b,fg,hj,i);
           }
           else
-          {  
-            std::cout << "Invert Edge. Torus Check. \n" << std::endl;
-            invertEdge(heap,c,d,fg,hj);
-          }
-        }
-        else
-        {
-          std::cout << " 0.\n";
-        }
-      } else
-      {
-        std::cout << "0. Active vertex neighbours: " << findActiveNeighbours(b) << std::endl;
-        std::cout << "Check if b Dissapears under " << std::endl;
-        std::cout << "is triangle " << a << ", "
-                  << c << ", " << d << " ccw? " 
-                  << checkOrientation(a,c,d) << std::endl;
-        
-        std::cout << "Check thickness of edge " << heap.index << ':';
-        if(torusThicknessCheck(_SCHedges[heap.index].vertex1,_SCHedges[heap.index].vertex2,
-                                  _SCHedges[heap.index].face1,_SCHedges[heap.index].face2))
-        {
-          std::cout << " 1.  \nCheck thickness of torii " <<  hj.first << ' ' << hj.second << std::endl;
-
-          if(checkTorii(hj.first,hj.second))
           {
-            std::cout << "Dissapear vertex " << b << '\n' << std::endl;
-            dissapearVertex(heap,b,c,d,a,hj,fg,i);
-          }
-          else
-          {  
+            // invert the edge
             std::cout << "Invert Edge. Torus Check. \n" << std::endl;
-            invertEdge(heap,c,d,fg,hj);
+            invertEdge(heap,c_copy,d_copy,fg_copy,hj_copy);
           }
-        }
-        else
-        {
-          std::cout << " 0.\n";
-        }
-      }
+        
+      
+
     }
   }
+
+  }
+  else
+        {
+          // continue to the next element in the heap
+          std::cout << " 0.\n";
+        }
+  
+  
 } // changeTopology
 
 size_t SchCreator3D::findCommonFace(size_t e1,size_t e2)
@@ -1208,7 +1219,7 @@ void SchCreator3D::dissapearUnderEdge(SchCreator3D::SCHheap heap)
   }
   addToVertexNeighbours(edgeIndex+4);
 
-
+  _activeVertexes--;
 } // dissapearUnderEdge
 
 
@@ -1307,7 +1318,7 @@ void SchCreator3D::dissapearVertex(SCHheap heap, size_t v1, size_t v2, size_t v3
   updateNeighbours(e,newT);
 
   // insert triangle to heap
-  std::cout << v2 << ' ' << v3 << ' ' << v4 << ' ' << findCircumSphere3(v2,v3,v4).radius << std::endl;
+  std::cout << v4 << ' ' << v3 << ' ' << v2 << ' ' << findCircumSphere3(v2,v3,v4).radius << std::endl;
 
   double ccradius = findCircumSphere3(v2,v3,v4).radius;
   if(ccradius > heap.radius)
@@ -1747,12 +1758,16 @@ void SchCreator3D::printVertexes()
   std::cout << "\nIndex\tInHull " << std::endl;
   for(auto i = _SCHvertexes.begin(); i != _SCHvertexes.end(); i++)
   {
-    std::cout << index << '\t' << (*i).inHull << std::endl;
-    std::cout << "neighbours: ";
-    for(auto j = (*i).neighbours.begin(); j != (*i).neighbours.end(); j++)
-      std::cout << *j << ' ';
+    if(i->inHull)
+    {
+      std::cout << index << '\t' << (*i).inHull << std::endl;
+      std::cout << "neighbours: ";
+      for(auto j = (*i).neighbours.begin(); j != (*i).neighbours.end(); j++)
+        std::cout << *j << ' ';
 
-    std::cout << std::endl;
+      std::cout << std::endl;
+    }
+
     index++;
   }
 }
@@ -1881,15 +1896,6 @@ void SchCreator3D::computeSCH(const std::string & filename)
 
   while(_alpha > _desiredAlpha)
   {
-    if(_limitCase)
-    {
-      std::cout << "Limit case reached. Setting new minimum value for alpha at "
-                << _alpha << "..." << std::endl; 
-      _desiredAlpha = _alpha + 1e-2;
-      _R = _r + _desiredAlpha;
-      break;
-    }
-
     size_t tindex = 0;
     for(auto i = _SCHtriangles.begin(); i != _SCHtriangles.end(); i++)
     {
@@ -1897,8 +1903,10 @@ void SchCreator3D::computeSCH(const std::string & filename)
       {
         if(!_SCHedges[i->e1].inHull || !_SCHedges[i->e2].inHull || !_SCHedges[i->e3].inHull)
         {
-          std::cout << "The triangle index " << tindex << ' ' << i->e1 << ' ' << i->e2 << ' ' << i->e3 << std::endl;
-          std::cout << "The triangle index " << i->inHull << ' ' << _SCHedges[i->e1].inHull << ' ' << _SCHedges[i->e2].inHull << ' ' << _SCHedges[i->e3].inHull << std::endl;
+          std::cout << "The triangle index " << tindex << ':' << i->inHull << ' ' 
+                    << i->e1 << ':' << _SCHedges[i->e1].inHull << ' ' 
+                    << i->e2 << ':' << _SCHedges[i->e2].inHull << ' ' 
+                    << i->e3 << ':' << _SCHedges[i->e3].inHull << std::endl;
           exit(1);
         }
       }
@@ -1916,6 +1924,18 @@ void SchCreator3D::computeSCH(const std::string & filename)
     } else
     {
       dissapearUnderEdge(heap);
+    }
+
+    if(_limitCase)
+    {
+      printVertexes();
+      printEdges();
+      printTriangles();
+     
+      std::cout << "Limit case reached. Setting new minimum value for alpha at "
+                << _desiredAlpha << "..." << std::endl; 
+      _R = _r + _desiredAlpha;
+      break;
     }
 
     bool check = checkHeap();
@@ -1944,8 +1964,6 @@ void SchCreator3D::computeSCH(const std::string & filename)
     
   }
 
-
-
   updateVertexesIndex();
   // get spheres
   getSmallSpheres();
@@ -1953,16 +1971,6 @@ void SchCreator3D::computeSCH(const std::string & filename)
   getTorii();
   getVertexNeighbours();
   
-  // std::priority_queue<SCHheap> vHeap = std::priority_queue<SCHheap>(temp.begin(),temp.end());
-  // std::cout << "HEAP" << std::endl;
-  // std::cout << std::setprecision(10);
-  // for(size_t i = 0; i < vHeap.size(); i++)
-  // {
-  //   std::cout << vHeap.top().radius << ' ' << vHeap.top().index << ' ' << vHeap.top().t;
-  //   bool check = (vHeap.top().t == 0) ? _SCHedges[vHeap.top().index].inHull:_SCHtriangles[vHeap.top().index].inHull;
-  //   std::cout << ' ' << check << std::endl;
-  //   vHeap.pop();
-  // }
 } // computeSCH
 } // namespace sch
 
