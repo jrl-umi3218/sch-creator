@@ -1,8 +1,8 @@
 /*! \file sch-creator-3d.h
  *  \brief Declaration file of the Class sch-creator-3d
  *  \author Ana Ruiz
- *  \version 0.0.0
- *	\date 21.07.09
+ *  \version 1.0.0
+ *	\date 17.11.21
  */
 
 #ifndef SCH_CREATOR_3D_H
@@ -33,10 +33,10 @@ namespace sch
   /*! \class SchCreator3D
   *	\brief %Class SchCreator3D
   *	\author Ruiz Ana
-  *	\version 0.0.0
-  *	\date 21.07.09
-  *	\bug None
-  *	\warning None
+  *	\version 1.0.0
+  *	\date 17.11.21
+  *	\bug Output files show errors in visualizer
+  *	\warning Opening too many files in visualizer crashes vscode
   *
   * This class read a 3d points cloud and compute its strictly convex hull made of arcs 
   */
@@ -246,21 +246,21 @@ namespace sch
     SchCreator3D(double r, double R);
     
   private:
-    bool findMaxDistance(); 
-
-    void initialize(); 
-
-    void getSmallSpheres();
-
-    void getBigSpheres();
+    //  heap functions
+    void getHeap();
+    double getEdgeHeap(const SCHedge &e);
+    bool checkHeap();
 
     // get key functions
     size_t getEdgeKey(size_t a, size_t b);
     size_t getEdgeKey(size_t edge);
     size_t getKey(size_t a, size_t b);
 
-    // functions required to get the big spheres
+    // sphere functions
+      // circumsphere
     Sphere findCircumSphere3(size_t a, size_t b, size_t c);
+    Sphere findCircumSphere4(size_t a, size_t b, size_t c, size_t d);
+      // sphere through points
     Sphere findSphereThroughPoints(size_t a, size_t b,
                                    size_t c);  
     Sphere findSphereThroughPoints(size_t a, SchCreator3D::Plane p,
@@ -269,7 +269,7 @@ namespace sch
                                    Eigen::Vector2d circleCenter2D,
                                    double R);                         
     Sphere findSphereThroughPoints(const SCHtriangle &t);
-    Plane findPlaneBase(size_t a, size_t b, size_t c);
+      // find circle
     Eigen::Vector2d findCircleThroughPoints(
                         const Eigen::Vector2d &a, 
                         const Eigen::Vector2d &b,
@@ -278,8 +278,33 @@ namespace sch
                                             size_t b,
                                             size_t c,
                                             SchCreator3D::Plane p);
+      //  get plane
+    Plane findPlaneBase(size_t a, size_t b, size_t c);
+      //  check in sphere
+    bool checkPointsInSphere(const Sphere &s);
+    bool checkPointsInSphere(size_t a, size_t b, size_t c, size_t d);
     
+
+    //  change of topology functions
+    void changeTopology(SCHheap heap);
+    void disappearVertex(SCHheap heap, size_t v1, size_t v2, size_t v3 , size_t v4, 
+                         SCHneighbours e12,SCHneighbours e34, size_t e);
+    void invertEdge(SCHheap heap, size_t v3, size_t v4,
+                    SCHneighbours e12, SCHneighbours e34);
+    void disappearUnderEdge(SCHheap heap);
+    void makeNewEdge(const SCHedge &e, size_t prevE, size_t newE, size_t t, double maxHeap);
+
+    // update functions
+    void updateNeighbours(SCHneighbours e, size_t index);
+    void updateNeighbours(size_t e, size_t index);
+    void updateNeighbours(size_t oldE, size_t f, size_t e);
+
+    // build hull functions
+    void getSmallSpheres();
+    void getBigSpheres();
     void getTorii();
+    void getVertexNeighbours();
+        
     // functions required to get the torii and plane normals
     Torus getTorus(const Sphere &s, size_t a, size_t b);
     double getCosine(size_t a, size_t b);
@@ -287,61 +312,58 @@ namespace sch
                                         const Eigen::Vector3d &n);
     Eigen::Vector3d getPlaneNormal(size_t a,size_t b,Eigen::Vector3d c);
     Eigen::Vector3d getPlaneNormal(size_t a,size_t b,size_t f);
-    
-    void getVertexNeighbours();
 
-    size_t findCommonFace(size_t e1, size_t e2);
-
-    void getHeap();
-    double getEdgeHeap(const SCHedge &e);
-    size_t findVertex(size_t f, size_t a, size_t b);
-    size_t findVertex(const SCHtriangle &t,size_t a,size_t b);
-
-    Sphere findCircumSphere4(size_t a, size_t b, size_t c, size_t d);
-    
-    // other functions
-    void swap(SCHneighbours &a, SCHneighbours &b);
-    void changeTopology(SCHheap heap);
+    // print functions
     void printEdges();
     void printVertexes();
     void printTriangles();
     void printHeap();
-    void updateNeighbours(SCHneighbours e, size_t index);
-    void updateNeighbours(size_t e, size_t index);
-    void updateNeighbours(size_t oldE, size_t f, size_t e);
-    void addToVertexNeighbours(size_t e);
+
+    // find functions
     SCHneighbours findEdge(size_t f1, size_t f2, size_t v1, size_t v2, size_t v3);
     SCHneighbours findEdges(size_t f, size_t a, size_t b, size_t e);
-
     size_t findEdge(size_t v1, size_t v2);
+    size_t findEdge(size_t f, size_t e1, size_t e2);
+
+    size_t findCommonFace(size_t e1, size_t e2);
+
+    size_t findVertex(size_t e1, size_t e2);
+    size_t findVertex(size_t f, size_t a, size_t b);
+    size_t findVertex(const SCHtriangle &t,size_t a,size_t b);
+
+    
+    // swap
+    void swap(size_t &a, size_t &b);
+    void swap(SCHneighbours &a, SCHneighbours &b);
+    
+    // check neighbours
     bool checkSameNeighbour(size_t v1, size_t v2, type t);
     bool checkSameNeighbour(size_t e1, size_t e2, size_t f1);
-    void dissapearVertex(SCHheap heap, size_t v1, size_t v2, size_t v3 , size_t v4, 
-                         SCHneighbours e12,SCHneighbours e34, size_t e);
-    void invertEdge(SCHheap heap, size_t v3, size_t v4,
-                    SCHneighbours e12, SCHneighbours e34);
-    bool checkPointsInSphere(const Sphere &s);
-    bool checkPointsInSphere(size_t a, size_t b, size_t c, size_t d);
-    bool getDerivative(size_t v1, size_t v2, size_t v3, size_t v4);
-    void updateVertexesIndex();
-    void dissapearUnderEdge(SCHheap heap);
+
     void removeNeighboursFromHull(size_t v);
+
     size_t findActiveNeighbours(size_t v);
-    bool checkHeap();
-    double addNoise();
-    bool torusOnSphereCheck(size_t a, size_t b, const Eigen::Vector3d &C1, 
-                            const Eigen::Vector3d &C2);
-    bool checkOrientation(size_t a, size_t b, size_t c);
-    double angleBetween(Eigen::Vector3d a, Eigen::Vector3d b);
-    void orderTriangle(size_t a, size_t &b, size_t &c);
-    void swap(size_t &a, size_t &b);
-    bool checkLimitCase(size_t a, size_t b, size_t c, size_t d, double r);
-    void makeNewEdge(const SCHedge &e, size_t prevE, size_t newE, size_t t, double maxHeap);
-    size_t findVertex(size_t e1, size_t e2);
-    size_t findEdge(size_t f, size_t e1, size_t e2);
-    void removeTriangle(size_t t);
+
+    void addToVertexNeighbours(size_t e);
+
+    // torus checks
     bool torusThicknessCheck(size_t v1, size_t v2, size_t f1, size_t f2);
     bool checkTorii(size_t e1, size_t e2);
+
+    // other
+    bool findMaxDistance(); 
+
+    void initialize(); 
+
+    bool getDerivative(size_t v1, size_t v2, size_t v3, size_t v4);
+    
+    double addNoise();
+
+    bool checkOrientation(size_t a, size_t b, size_t c);
+
+    void orderTriangle(size_t a, size_t &b, size_t &c);
+
+    bool checkLimitCase(size_t a, size_t b, size_t c, size_t d, double r);
   public:
     void computeSCH(const std::string &filename);
     void writeToFile(const std::string &filename);
@@ -358,7 +380,6 @@ namespace sch
     std::vector<SCHvertex> _SCHvertexes;
     std::vector<SCHedge> _SCHedges;
     std::vector<SCHtriangle> _SCHtriangles;
-    std::map<size_t,size_t> toriiKeys;
 
     size_t _numberOfVertexes;
     std::vector<Eigen::Vector3d> _vertexes;
@@ -368,18 +389,13 @@ namespace sch
     std::vector<BigSphere> _bigSpheres;
     std::map<size_t,Face> _bigSphereNormals;
 
-    std::map<size_t,size_t> toriiKey;
     std::vector<Torus> _torii;
     std::map<size_t,std::pair<SCHcone,SCHcone>> _toriiCones;
     std::map<size_t,std::pair<SCHplane,SCHplane>> _toriiPlanes;
 
     std::priority_queue<SCHheap> _heap;
-    // std::vector<SCHheap> temp;
-    std::set<size_t,std::less<size_t>> difference;
-    std::vector<size_t> finalIndexes;
 
     Eigen::Vector3d initialCenter;
-    std::vector<size_t> v;
     
   }; //class SchCreator3D
 
