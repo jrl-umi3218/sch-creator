@@ -279,7 +279,7 @@ void SchCreator3D::initialize()
     // add them to a vector
     for(auto j = neighbours.first; j != neighbours.second; j++) tempX.push_back((*j).second);
     // add SCHvertex to vector
-    _SCHvertexes.push_back(SCHvertex(_vertexes[i], tempX));
+    _SCHvertexes.push_back(SCHvertex(tempX));
     tempX.clear();
   }
 
@@ -293,16 +293,17 @@ void SchCreator3D::initialize()
 void SchCreator3D::getSmallSpheres()
 {
   std::cout << "Finding small spheres... ";
-  size_t index = 0;
+  size_t index = 0, ssIndex = 0;
   for(auto i = _SCHvertexes.begin(); i != _SCHvertexes.end(); i++)
   {
     if((*i).inHull)
     {
       // get small spheres
-      _smallSpheres.push_back(Sphere((*i).vertex, _r));
-      i->ssIndex = index;
-      index++;
+      _smallSpheres.push_back(Sphere(_vertexes[index], _r));
+      i->ssIndex = ssIndex;
+      ssIndex++;
     }
+    index++;
   }
   std::cout << "Done." << std::endl;
 } // getSmallSpheres
@@ -586,7 +587,7 @@ SchCreator3D::Plane SchCreator3D::findPlaneBase(size_t a, size_t b, size_t c)
   Eigen::MatrixXd base(2, 3);
   base << ex.transpose(), ey.transpose();
 
-  return Plane(base, n, a, b, c);
+  return Plane(base, n);
 } // SchCreator3D::findPlaneBase
 
 /**
@@ -2443,11 +2444,11 @@ int main(int argc, char ** argv)
 
   std::cout << "\n SCH parameters: r = " << r << ", R = " << R << std::endl << std::endl;
 
-  if(vm.count("input-file") && vm.count("output-file"))
+  if(vm.count("input") && vm.count("output"))
   {
     std::fstream testfile;
-    std::string input = vm["input-file"].as<std::string>();
-    std::string output = vm["output-file"].as<std::string>();
+    std::string input = vm["input"].as<std::string>();
+    std::string output = vm["output"].as<std::string>();
 
     std::cout << "Opening " << input << std::endl;
     sch::SchCreator3D sch(r, R);

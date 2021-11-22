@@ -48,17 +48,6 @@ namespace sch
     {
         Eigen::MatrixXd base;
         Eigen::Vector3d normal;
-        size_t p1, p2, p3;
-
-        Plane(const Eigen::MatrixXd &b, const Eigen::Vector3d &n,
-              size_t A, size_t B, size_t C)
-        {
-            base = b;
-            normal = n;
-            p1 = A;
-            p2 = B;
-            p3 = C;
-        }
 
         Plane(const Eigen::MatrixXd &b, const Eigen::Vector3d &n)
         {
@@ -69,6 +58,12 @@ namespace sch
         Plane() {}
     };
 
+  // Structures used to describe the SCH
+
+    /**
+     * @brief Describes a regular sphere.
+     * 
+     */
     struct Sphere
     {
         Eigen::Vector3d center;
@@ -86,6 +81,10 @@ namespace sch
         
     };
 
+    /**
+     * @brief Describes one of the spheres that touch 3 vertexes.
+     * 
+     */
     struct BigSphere
     {
       Sphere s;
@@ -104,26 +103,20 @@ namespace sch
 
     };
 
+    /**
+     * @brief Contains the three plane normals limiting a big sphere.
+     * 
+     */
     struct Face
     {
       std::pair<size_t,Eigen::Vector3d> plane1, plane2, plane3; 
     };
 
-    struct SphereCenter
-    {
-        double circleRadius;
-        Eigen::Vector3d circleCenter;
-        Eigen::Vector3d planeNormal;
-
-        SphereCenter(double r, const Eigen::Vector3d &cc, const Eigen::Vector3d &pn)
-        {
-            circleRadius = r;
-            circleCenter = cc;
-            planeNormal = pn;
-        }
-
-    };
-
+    /**
+     * @brief A torus cone. The axis should be the same as its corresponding
+     * torus' normal, which should be the normalized edge.
+     * 
+     */
     struct Cone
     {
       Eigen::Vector3d axis;
@@ -138,6 +131,10 @@ namespace sch
       Cone() {}
     };
 
+    /**
+     * @brief A torus. The normal corresponds to the "axis" of its cone.
+     * 
+     */
     struct Torus
     {
       Eigen::Vector3d center, normal;
@@ -153,16 +150,22 @@ namespace sch
       Torus() {}
     };
 
+  // Structures used to build the SCH
+
+    /**
+     * @brief Contains the state if the current vertex in the hull,
+     * a vector indicating its edge neighbours and the index of the final
+     * corresponding small sphere.
+     * 
+     */
     struct SCHvertex
     {
       bool inHull = true;
-      Eigen::Vector3d vertex;
       std::vector<size_t> neighbours;
       size_t ssIndex = -1;
 
-      SCHvertex(const Eigen::Vector3d &v,const std::vector<size_t> &n)
+      SCHvertex(const std::vector<size_t> &n)
       {
-        vertex = v;
         neighbours = n;
       }
 
@@ -170,8 +173,14 @@ namespace sch
       {
         inHull = false;
       }
-    };
+    };  
 
+    /**
+     * @brief Contains the state of the current edge in the hull,
+     * the indexes of the vertexes of the edge, the neighbour faces/triangles
+     * to the edge and the final torus index.
+     * 
+     */
     struct SCHedge
     {
       bool inHull = true;
@@ -192,6 +201,12 @@ namespace sch
       }
     };
 
+    /**
+     * @brief Contains the state of the current triangle in the hull, 
+     * the three vertexes that make up the triangle, the three edges
+     * that are neighbours to the triangle and the final big sphere index.
+     * 
+     */
     struct SCHtriangle
     {
       bool inHull = true;
@@ -215,8 +230,18 @@ namespace sch
       }
     };
 
+    /**
+     * @brief type is used in the heap to indicate whether it corresponds to
+     * an edge or a trianlge
+     * 
+     */
     enum type {edge,triangle};
 
+    /**
+     * @brief Contains the computed circumradius, the type of element that produced
+     * this radius and the index of said element.
+     * 
+     */
     struct SCHheap
     {
       double radius;
@@ -235,11 +260,26 @@ namespace sch
       }
     };
 
-    typedef std::pair<Sphere,bool> SCHss;
-    typedef std::pair<BigSphere,bool> SCHbs;
-    typedef std::pair<Torus,bool> SCHt;
+    /**
+     * @brief The first element indicates the index of the cone's initial vertex
+     * (according to the direction of its axis), while the second element is the
+     * cone itself.
+     * 
+     */
     typedef std::pair<size_t,Cone> SCHcone;
+
+    /**
+     * @brief The first element indicates the index of the triangle to which the
+     * plane normal belongs to, while the second element is the plane normal itself.
+     * 
+     */
     typedef std::pair<size_t,Eigen::Vector3d> SCHplane;
+
+    /**
+     * @brief A pair of indexes that will point to the pair of neighbours
+     * that fulfill the required conditions.
+     * 
+     */
     typedef std::pair<size_t,size_t> SCHneighbours;
 
   public:
