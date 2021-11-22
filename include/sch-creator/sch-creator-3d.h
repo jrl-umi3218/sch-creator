@@ -259,6 +259,7 @@ namespace sch
     // sphere functions
       // circumsphere
     Sphere findCircumSphere3(size_t a, size_t b, size_t c);
+    Sphere findCircumSphere4();
     Sphere findCircumSphere4(size_t a, size_t b, size_t c, size_t d);
       // sphere through points
     Sphere findSphereThroughPoints(size_t a, size_t b,
@@ -386,6 +387,7 @@ namespace sch
     std::vector<std::vector<SCHcone>> _vertexNeighbours;
 
     std::vector<Sphere> _smallSpheres;
+    
     std::vector<BigSphere> _bigSpheres;
     std::map<size_t,Face> _bigSphereNormals;
 
