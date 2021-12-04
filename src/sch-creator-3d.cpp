@@ -1,5 +1,5 @@
 #include <sch-creator/sch-creator-3d.h>
-#define DISPLAY_INFO true
+//#define DISPLAY_INFO false
 
 namespace sch
 {
@@ -277,7 +277,8 @@ void SchCreator3D::initialize()
     // get all neighbours for the current vertex
     auto neighbours = orderedEdges.equal_range(i);
     // add them to a vector
-    for(auto j = neighbours.first; j != neighbours.second; j++) tempX.push_back((*j).second);
+    for(auto j = neighbours.first; j != neighbours.second; j++) 
+      tempX.push_back((*j).second);
     // add SCHvertex to vector
     _SCHvertexes.push_back(SCHvertex(tempX));
     tempX.clear();
@@ -396,17 +397,18 @@ SchCreator3D::Sphere SchCreator3D::findCircumSphere3(size_t a, size_t b, size_t 
   Eigen::Vector3d ab, ac;
   ab = _vertexes[b] - _vertexes[a];
   ac = _vertexes[c] - _vertexes[a];
+  // find the plane through the points
+  Plane p = findPlaneBase(a,b,c);
+  Eigen::Vector2d oa(0,0), ob = p.base * ab, oc = p.base * ac;
+  Eigen::Vector2d c2d = findCircleThroughPoints(oa,ob,oc);
 
-  // compute dot products
-  double v11 = ab.dot(ab);
-  double v22 = ac.dot(ac);
-  double v12 = ab.dot(ac);
+  // convert coordinates to 3D
+  Eigen::Vector3d circleCenter3D;
+  circleCenter3D(0) = _vertexes[a](0) + c2d.dot(p.base.col(0));
+  circleCenter3D(1) = _vertexes[a](1) + c2d.dot(p.base.col(1));
+  circleCenter3D(2) = _vertexes[a](2) + c2d.dot(p.base.col(2));
 
-  double num = v11 * v22 - pow(v12, 2);
-  double k1 = 0.5 * v22 * (v11 - v12) / num;
-  double k2 = 0.5 * v11 * (v22 - v12) / num;
-
-  return Sphere(_vertexes[a] + k1 * ab + k2 * ac, (k1 * ab + k2 * ac).norm());
+  return Sphere(circleCenter3D, c2d.norm());
 } // SchCreator3D::findCircumSphere3
 
 SchCreator3D::Sphere SchCreator3D::findCircumSphere4()
@@ -606,7 +608,9 @@ Eigen::Vector2d SchCreator3D::findCircleThroughPoints(const Eigen::Vector2d & a,
 {
   // Using crammer's rule, find the base matrix
   Eigen::MatrixXd A(3, 4);
-  A << pow(a.norm(), 2), a[0], a[1], 1, pow(b.norm(), 2), b[0], b[1], 1, pow(c.norm(), 2), c[0], c[1], 1;
+  A << pow(a.norm(), 2), a[0], a[1], 1, 
+       pow(b.norm(), 2), b[0], b[1], 1, 
+       pow(c.norm(), 2), c[0], c[1], 1;
   
   // From the base matrix get M1n
   Eigen::Matrix3d M11 = A.block(0, 1, 3, 3), M12, M13, M14;
@@ -2253,9 +2257,6 @@ void SchCreator3D::computeSCH(const std::string & filename)
 {
   // read points from file with poly_algorithms
   poly.openFromFile(filename);
-  // get no. of vertex
-  _numberOfVertexes = poly.vertexes_.size();
-  _vertexes.reserve(_numberOfVertexes);
 
   // ensure alpha is smaller than the max. body distance,
   if(findMaxDistance())
@@ -2264,6 +2265,10 @@ void SchCreator3D::computeSCH(const std::string & filename)
     std::cout << "Finished." << std::endl;
     return;
   }
+
+  // get no. of vertex
+  _numberOfVertexes = poly.vertexes_.size();
+  _vertexes.reserve(_numberOfVertexes);
 
   // get the vertexes, triangles and edges
   initialize();
