@@ -2438,9 +2438,9 @@ int main(int argc, char ** argv)
     return 1;
   }
 
-  std::cout << "============================== ";
-  std::cout << "Optimal compexicy SCH building ";
-  std::cout << "============================== ";
+  std::cout << "=============================== \n";
+  std::cout << "Optimal complexity SCH building \n";
+  std::cout << "=============================== \n";
   std::cout << "\n SCH parameters: r = " << r << ", R = " << R << std::endl << std::endl;
 
   if(vm.count("input") && vm.count("output"))
