@@ -28,9 +28,7 @@ int main(int argc, char ** argv)
       double b = (rand() / double(RAND_MAX));
       double c = (rand() / double(RAND_MAX));
 
-      v[i] = Vector3(randomNormal(a), 
-                     randomNormal(b), 
-                     randomNormal(c)).normalize();
+      v[i] = Vector3(randomNormal(a), randomNormal(b), randomNormal(c)).normalized();
     }
 
     S_ObjectNormalized * obj1 = new STP_BV();
