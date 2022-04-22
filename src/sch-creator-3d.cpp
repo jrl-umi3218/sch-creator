@@ -282,7 +282,9 @@ void SchCreator3D::initialize()
  */
 void SchCreator3D::getSmallSpheres()
 {
-  std::cout << "Finding small spheres... ";
+#ifdef DISPLAY_INFO
+  std::cout << "Creating small spheres... ";
+#endif
   size_t index = 0, ssIndex = 0;
   for(auto i = _SCHvertexes.begin(); i != _SCHvertexes.end(); i++)
   {
@@ -295,7 +297,9 @@ void SchCreator3D::getSmallSpheres()
     }
     index++;
   }
+#ifdef DISPLAY_INFO
   std::cout << "Done." << std::endl;
+#endif
 } // getSmallSpheres
 
 /**
@@ -341,7 +345,9 @@ bool SchCreator3D::checkOrientation(size_t a, size_t b, size_t c)
  */
 void SchCreator3D::getBigSpheres()
 {
-  std::cout << "Finding big spheres...";
+#ifdef DISPLAY_INFO
+  std::cout << "Creating big spheres...";
+#endif
   Sphere s;
   BigSphere bs;
   size_t index = _smallSpheres.size();
@@ -363,8 +369,10 @@ void SchCreator3D::getBigSpheres()
       index++;
     }
   }
-
+#ifdef DISPLAY_INFO
   std::cout << " Done." << std::endl;
+#endif
+
 } // SchCreator3D::getBigSpheres
 
 /*
@@ -641,7 +649,9 @@ Eigen::Vector2d SchCreator3D::findCircleThroughPoints(size_t a, size_t b, size_t
  */
 void SchCreator3D::getTorii()
 {
-  std::cout << "Finding torii...";
+#ifdef DISPLAY_INFO
+  std::cout << "Creating torii...";
+#endif
   size_t torusIndex = _smallSpheres.size() + _bigSpheres.size(), index = _smallSpheres.size();
   std::multimap<size_t, SCHplane> orderedPlanes;
   Eigen::Vector3d planeNormal;
@@ -731,8 +741,9 @@ void SchCreator3D::getTorii()
                                        // first SCHplane, second SCHplane
                                        std::make_pair(plane, (*it.first).second)));
   }
-
+#ifdef DISPLAY_INFO
   std::cout << " Done." << std::endl;
+#endif
 } // getTorii
 
 /**
@@ -2079,8 +2090,6 @@ void SchCreator3D::writeToFile(const std::string & filename)
 
   // close the file
   os.close();
-
-  std::cout << "\nSCH Created, output file " << filename.c_str() << std::endl;
 }
 
 void SchCreator3D::printEdges()
@@ -2408,11 +2417,12 @@ int main(int argc, char ** argv)
   double r, R;
 
   po::options_description desc("Allowed options");
-  desc.add_options()("help,h", "produce help message")(
-      "r,r", po::value<double>(&r)->default_value(.02),"small sphere radius")
-      ("R,R", po::value<double>(&R)->default_value(300.),"big sphere radius")
-      ("input", po::value<std::string>(),"input file")
-      ("output", po::value<std::string>(), "output file");
+  desc.add_options()("help,h", "produce help message")("r,r", po::value<double>(&r)->default_value(.02),
+                                                       "small sphere radius")(
+      "R,R", po::value<double>(&R)->default_value(300.),
+      "big sphere radius")("input", po::value<std::string>(),
+                           "input file (the format is the output of this comment \"qconvex TI <input_filename> TO "
+                           "<output_filename> Qt o f\"")("output", po::value<std::string>(), "output file");
 
   po::positional_options_description pos;
   pos.add("input", 1);
@@ -2428,6 +2438,9 @@ int main(int argc, char ** argv)
     return 1;
   }
 
+  std::cout << "============================== ";
+  std::cout << "Optimal compexicy SCH building ";
+  std::cout << "============================== ";
   std::cout << "\n SCH parameters: r = " << r << ", R = " << R << std::endl << std::endl;
 
   if(vm.count("input") && vm.count("output"))
@@ -2436,11 +2449,17 @@ int main(int argc, char ** argv)
     std::string input = vm["input"].as<std::string>();
     std::string output = vm["output"].as<std::string>();
 
-    std::cout << "Opening " << input << std::endl;
+    std::cout << "Opening file " << input << " and creating SCH ... ";
     sch::SchCreator3D sch(r, R);
+
     sch.computeSCH(input);
 
+    std::cout << "Done" << std::endl;
+
+    std::cout << "Creating output file " << output << " ... ";
     sch.writeToFile(output);
+
+    std::cout << " Successfully done" << std::endl;
 
     // /home/amrf/balloon-inflating/sch-visualization/tests/shared-tests/data/sample_polyhedron.otp
   }
