@@ -391,8 +391,11 @@ namespace sch
     bool torusThicknessCheck(size_t v1, size_t v2, size_t f1, size_t f2);
     bool checkTorii(size_t e1, size_t e2);
 
-    // other
-    bool findMaxDistance(); 
+    /// @brief Gets an estimate on the magnitude of the noise that should be a factor
+    /// of the smallest edge of this shape
+    ///
+    /// @param factor the multiplier factor
+    void autocomputeNoiseLevel(double factor = 1e-3);
 
     void initialize(); 
 
@@ -414,7 +417,7 @@ namespace sch
 
   private:
     double _r, _R, _alpha, _desiredAlpha, _epsilon;
-    double noise = 100, maxBodyDistance = 0;
+    double noise = 1;
     bool _limitCase = false;
 
     size_t _activeVertexes;

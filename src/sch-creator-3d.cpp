@@ -97,38 +97,27 @@ bool SchCreator3D::getDerivative(size_t v1, size_t v2, size_t v3, size_t v4)
   return 2 * ((circle3D + dToSphereCenter * p.normal).dot(dsc) - _vertexes[v4].dot(dsc) - _alpha) > 0;
 } // getDerivative
 
-/**
- * @brief Finds the maximum body distance from the polyhedron's edges.
- * 
- * @return true if the desired circumference is equal or larger than the max distance.
- * false otherwise.
- */
-bool SchCreator3D::findMaxDistance()
+/// @brief Gets an estimate on the magnitude of the noise that should be a factor
+/// of the smallest edge of this shape
+///
+/// @param factor the multiplier factor
+void SchCreator3D::autocomputeNoiseLevel(double factor)
 {
   double d;
-
+  double min = std::numeric_limits<double>::infinity();
   for(size_t i = 0; i < poly.edges_.size(); i++)
   {
     // get the length of current edge
     d = poly.edges_[i].edge.norm();
     // update largest distance
-    if(maxBodyDistance < d) 
-      maxBodyDistance = d;
-    // update the smallest distance
-    if(noise > d) 
-      noise = d;
+    if(min > d)
+    {
+      min = d;
+    }
   }
 
-  // obtain the noise from the smallest distance
-  noise /= 1000;
-
-  std::cout << "Maximum body distance: " << maxBodyDistance << std::endl;
-  std::cout << "Minimum body distance: " << noise << std::endl;
-
-  if(maxBodyDistance >= 2 * _desiredAlpha)
-    return true;
-  else
-    return false;
+  // obtain the noise from the smallest edge
+  noise *= factor;
 } // SchCreator3D::findMaxDistance
 
 /**
@@ -2257,14 +2246,6 @@ void SchCreator3D::computeSCH(const std::string & filename)
 {
   // read points from file with poly_algorithms
   poly.openFromFile(filename);
-
-  // ensure alpha is smaller than the max. body distance,
-  if(findMaxDistance())
-  {
-    std::cout << "ERROR, impossible to compute SCH, choose larger R." << std::endl;
-    std::cout << "Finished." << std::endl;
-    return;
-  }
 
   // get no. of vertex
   _numberOfVertexes = poly.vertexes_.size();
